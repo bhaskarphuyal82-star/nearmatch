@@ -8,11 +8,17 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     const baseUrl = config.siteUrl || 'https://nearmatch.site';
 
     return {
-        rules: {
-            userAgent: '*',
-            allow: '/',
-            disallow: ['/admin/', '/api/', '/_next/'],
-        },
+        rules: [
+            {
+                userAgent: '*',
+                allow: '/',
+                disallow: ['/admin/', '/api/', '/_next/'],
+            },
+            {
+                userAgent: 'Mediapartners-Google',
+                allow: '/',
+            }
+        ],
         sitemap: `${baseUrl}/sitemap.xml`,
     };
 }
