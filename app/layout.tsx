@@ -66,7 +66,7 @@ export async function generateMetadata(): Promise<Metadata> {
         images: config.seo.ogImage ? [config.seo.ogImage] : [],
       },
       verification: {
-        google: config.seo.googleConsoleVerification,
+        google: config.seo.googleConsoleVerification || "sFvlagncjj--2AKNWIY66zONBb_t-c7Mv4nc9fgyY0g",
       },
     };
   } catch (error) {
