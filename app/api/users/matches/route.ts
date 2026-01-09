@@ -17,16 +17,22 @@ export async function GET() {
 
         const matches = await Match.find({
             users: session.user.id,
-            isActive: true,
+            isActive: true, // Only consider active matches
         })
             .populate('users', 'name photos lastActive isBanned')
-            .sort({ lastMessage: -1, matchedAt: -1 });
+            .sort({ lastMessage: -1, matchedAt: -1 })
+            .lean();
 
-        // Find users who have liked the current user
+        // Get IDs of people I have already matched with
+        const matchedUserIds = matches.flatMap((match: any) =>
+            match.users.map((u: any) => u._id)
+        );
+
+        // Find users who have liked the current user (but are NOT matches yet)
         const likedByUsers = await User.find({
             likedUsers: session.user.id,
-            _id: { $nin: matches.flatMap(m => m.users.map(u => u._id)) }, // Exclude already matched users
-        }).select('name photos lastActive bio dateOfBirth gender location interests height weight relationshipGoal lifestyle jobTitle company educationLevel university isBanned');
+            _id: { $nin: matchedUserIds }, // Exclude already matched users
+        }).select('name photos lastActive bio dateOfBirth gender location address interests height weight relationshipGoal lifestyle jobTitle company educationLevel university isBanned');
 
         // Format matches with the other user's info
         const formattedMatches = matches.map((match) => {
@@ -39,7 +45,7 @@ export async function GET() {
                 lastMessage: match.lastMessage,
                 user: otherUser,
             };
-        });
+        }).filter((m: { user: any }) => m.user);
 
         return NextResponse.json({
             matches: formattedMatches,

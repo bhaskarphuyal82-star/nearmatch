@@ -44,8 +44,9 @@ export default function MessagesPage() {
         );
     }
 
-    const newMatches = matches.filter(match => !match.lastMessage);
-    const conversations = matches.filter(match => !!match.lastMessage).sort((a, b) =>
+    const validMatches = matches.filter(match => match && match.user);
+    const newMatches = validMatches.filter(match => !match.lastMessage);
+    const conversations = validMatches.filter(match => !!match.lastMessage).sort((a, b) =>
         new Date(b.lastMessage!).getTime() - new Date(a.lastMessage!).getTime()
     );
 

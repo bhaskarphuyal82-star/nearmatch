@@ -128,8 +128,18 @@ export const authOptions: NextAuthOptions = {
                 const user = await User.findById(token.id).select('isBanned email');
                 console.log(`[Session Callback] Checking ban for user ${user?.email} (${token.id}): isBanned=${user?.isBanned}`);
 
-                if (user?.isBanned) {
-                    session.user.isBanned = true;
+                if (user) {
+                    // Update session with latest DB info
+                    session.user.isBanned = user.isBanned;
+                } else {
+                    // User deleted from DB but token remains -> invalid session
+                    // Returning null or modifying token would be ideal, but here we can just flag it
+                    // or NextAuth might handle it if we return null? 
+                    // Actually, returning a session with empty user or throwing might be safer to force re-login
+                    console.log(`[Session Callback] User ${token.id} not found in DB. Invalidating session.`);
+                    // @ts-ignore
+                    // return null; 
+                    throw new Error("SessionInvalid");
                 }
             }
             return session;

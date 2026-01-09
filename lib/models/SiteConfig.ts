@@ -43,6 +43,9 @@ export interface ISiteConfig extends Document {
         metaDescription?: string;
         metaKeywords?: string[];
         ogImage?: string;
+        googleAnalyticsId?: string;
+        googleConsoleVerification?: string;
+        googleTagManagerId?: string;
     };
 
     // Ads Configuration
@@ -52,6 +55,7 @@ export interface ISiteConfig extends Document {
         rewardEnabled: boolean; // profile boost
         rewardDuration: number; // minutes
         chatAdFrequency: number; // messages count
+        googleAdSenseId?: string; // e.g. ca-pub-XXXXXXXXXXXXXXXX
         adCodes: {
             interstitial: string;
             chat: string;
@@ -121,6 +125,9 @@ const SiteConfigSchema = new Schema<ISiteConfig>(
             metaDescription: { type: String },
             metaKeywords: [{ type: String }],
             ogImage: { type: String },
+            googleAnalyticsId: { type: String },
+            googleConsoleVerification: { type: String },
+            googleTagManagerId: { type: String },
         },
 
         ads: {
@@ -129,6 +136,7 @@ const SiteConfigSchema = new Schema<ISiteConfig>(
             rewardEnabled: { type: Boolean, default: true },
             rewardDuration: { type: Number, default: 15 },
             chatAdFrequency: { type: Number, default: 5 },
+            googleAdSenseId: { type: String },
             adCodes: {
                 interstitial: { type: String, default: '' },
                 chat: { type: String, default: '' },

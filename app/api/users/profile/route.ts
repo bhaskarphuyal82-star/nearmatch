@@ -60,6 +60,7 @@ export async function PUT(request: Request) {
             'company',
             'educationLevel',
             'university',
+            'address',
         ];
 
         // Filter only allowed fields

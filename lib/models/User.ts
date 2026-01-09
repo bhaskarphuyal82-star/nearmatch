@@ -13,6 +13,7 @@ export interface IUser extends Document {
         type: 'Point';
         coordinates: [number, number]; // [longitude, latitude]
     };
+    address?: string;
     preferences: {
         ageRange: { min: number; max: number };
         distance: number; // in kilometers
@@ -25,6 +26,7 @@ export interface IUser extends Document {
     lastActive: Date;
     likedUsers: mongoose.Types.ObjectId[];
     dislikedUsers: mongoose.Types.ObjectId[];
+    tempSkips: { user: mongoose.Types.ObjectId; timestamp: Date }[];
     boostedUntil?: Date;
     createdAt: Date;
     updatedAt: Date;
@@ -91,6 +93,10 @@ const UserSchema = new Schema<IUser>(
                 default: [0, 0],
             },
         },
+        address: {
+            type: String,
+            trim: true,
+        },
         preferences: {
             ageRange: {
                 min: { type: Number, default: 18 },
@@ -131,6 +137,10 @@ const UserSchema = new Schema<IUser>(
         dislikedUsers: [{
             type: Schema.Types.ObjectId,
             ref: 'User',
+        }],
+        tempSkips: [{
+            user: { type: Schema.Types.ObjectId, ref: 'User' },
+            timestamp: { type: Date, default: Date.now }
         }],
         boostedUntil: {
             type: Date,

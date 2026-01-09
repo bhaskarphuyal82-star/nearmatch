@@ -37,10 +37,18 @@ export async function POST(request: Request) {
         }
 
         // Check if already interacted
+        const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+
+        const recentSkip = currentUser.tempSkips?.find(
+            (skip: { user: mongoose.Types.ObjectId; timestamp: Date }) =>
+                skip.user.toString() === targetUserId && new Date(skip.timestamp) > threeHoursAgo
+        );
+
         if (currentUser.likedUsers.includes(targetUserId) ||
-            currentUser.dislikedUsers.includes(targetUserId)) {
+            currentUser.dislikedUsers.includes(targetUserId) ||
+            recentSkip) {
             return NextResponse.json(
-                { error: 'Already interacted with this user' },
+                { error: 'Already interacted with this user recently' },
                 { status: 400 }
             );
         }
@@ -81,9 +89,14 @@ export async function POST(request: Request) {
                 isMatch: false,
             });
         } else {
-            // Add to disliked users
+            // Add to tempSkips (temporary dislike)
             await User.findByIdAndUpdate(session.user.id, {
-                $push: { dislikedUsers: targetUserId },
+                $push: {
+                    tempSkips: {
+                        user: targetUserId,
+                        timestamp: new Date()
+                    }
+                },
             });
 
             return NextResponse.json({

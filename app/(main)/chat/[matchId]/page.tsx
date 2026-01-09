@@ -9,6 +9,7 @@ import { ArrowLeft, Send, Loader2, Phone, Video, MoreVertical, Smile, Image as I
 import { useSession } from 'next-auth/react';
 import { ChatAdModal } from '@/components/ui/ChatAdModal';
 import { AdRenderer } from '@/components/ui/AdRenderer';
+import { useToast } from '@/components/ui/Toast';
 
 interface Message {
     _id: string;
@@ -50,6 +51,7 @@ export default function ChatPage() {
     const [sending, setSending] = useState(false);
     const [showStickers, setShowStickers] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+    const { showToast } = useToast();
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -138,7 +140,7 @@ export default function ChatPage() {
             } else {
                 const data = await res.json();
                 if (data.error) {
-                    alert(data.error);
+                    showToast(data.error, 'error');
                 }
             }
         } catch (error) {
@@ -165,7 +167,7 @@ export default function ChatPage() {
 
         // 2MB Limit
         if (file.size > 2 * 1024 * 1024) {
-            alert('File size must be less than 2MB');
+            showToast('File size must be less than 2MB', 'error');
             e.target.value = ''; // Reset input
             return;
         }
@@ -184,11 +186,11 @@ export default function ChatPage() {
                 const data = await res.json();
                 await sendMessage(data.url, 'image');
             } else {
-                alert('Failed to upload image');
+                showToast('Failed to upload image', 'error');
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Error uploading image');
+            showToast('Error uploading image', 'error');
         } finally {
             setSending(false);
             e.target.value = ''; // Reset input
@@ -204,13 +206,14 @@ export default function ChatPage() {
             });
 
             if (res.ok) {
+                showToast('Unmatched successfully', 'success');
                 router.push('/messages');
             } else {
-                alert('Failed to unmatch');
+                showToast('Failed to unmatch', 'error');
             }
         } catch (error) {
             console.error('Failed to unmatch:', error);
-            alert('Something went wrong');
+            showToast('Something went wrong', 'error');
         }
     }
 
@@ -344,7 +347,7 @@ export default function ChatPage() {
                                         {!isOwn && (
                                             <div className="w-7 flex-shrink-0">
                                                 {showAvatar && match?.user.photos[0] ? (
-                                                    <div className="w-7 h-7 rounded-full overflow-hidden">
+                                                    <Link href={`/user/${match.user._id}`} className="block w-7 h-7 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
                                                         <Image
                                                             src={match.user.photos[0]}
                                                             alt={match.user.name}
@@ -352,7 +355,7 @@ export default function ChatPage() {
                                                             height={28}
                                                             className="w-full h-full object-cover"
                                                         />
-                                                    </div>
+                                                    </Link>
                                                 ) : null}
                                             </div>
                                         )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
     Settings,
@@ -19,7 +19,8 @@ import {
     Users,
     MapPin,
     Camera,
-    Megaphone
+    Megaphone,
+    Upload
 } from 'lucide-react';
 
 interface SiteConfig {
@@ -51,6 +52,9 @@ interface SiteConfig {
         metaDescription?: string;
         metaKeywords?: string[];
         ogImage?: string;
+        googleAnalyticsId?: string;
+        googleConsoleVerification?: string;
+        googleTagManagerId?: string;
     };
     app: {
         maintenanceMode: boolean;
@@ -68,6 +72,7 @@ interface SiteConfig {
         rewardEnabled: boolean;
         rewardDuration: number;
         chatAdFrequency: number;
+        googleAdSenseId?: string;
         adCodes: {
             interstitial: string;
             chat: string;
@@ -91,7 +96,9 @@ const defaultConfig: SiteConfig = {
         startUrl: '/discover',
     },
     social: {},
-    seo: {},
+    seo: {
+        metaKeywords: [],
+    },
     app: {
         maintenanceMode: false,
         allowRegistration: true,
@@ -107,6 +114,7 @@ const defaultConfig: SiteConfig = {
         rewardEnabled: true,
         rewardDuration: 15,
         chatAdFrequency: 5,
+        googleAdSenseId: '',
         adCodes: {
             interstitial: '',
             chat: '',
@@ -115,7 +123,7 @@ const defaultConfig: SiteConfig = {
     },
 };
 
-type TabType = 'general' | 'pwa' | 'social' | 'seo' | 'app' | 'ads';
+type TabType = 'general' | 'pwa' | 'social' | 'seo' | 'app' | 'ads' | 'api';
 
 export default function SiteConfigPage() {
     const [config, setConfig] = useState<SiteConfig>(defaultConfig);
@@ -123,6 +131,15 @@ export default function SiteConfigPage() {
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('general');
     const [hasChanges, setHasChanges] = useState(false);
+    const [uploading, setUploading] = useState<{ logo: boolean; favicon: boolean; ogImage: boolean }>({
+        logo: false,
+        favicon: false,
+        ogImage: false,
+    });
+
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const faviconInputRef = useRef<HTMLInputElement>(null);
+    const ogImageInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchConfig();
@@ -180,6 +197,41 @@ export default function SiteConfigPage() {
         setHasChanges(true);
     }
 
+    async function handleFileUpload(
+        file: File,
+        type: 'logo' | 'favicon' | 'ogImage'
+    ) {
+        setUploading(prev => ({ ...prev, [type]: true }));
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (type === 'logo') {
+                    updateRootConfig('siteLogo', data.url);
+                } else if (type === 'favicon') {
+                    updateRootConfig('siteFavicon', data.url);
+                } else if (type === 'ogImage') {
+                    updateConfig('seo', 'ogImage', data.url);
+                }
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed to upload file');
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload file');
+        } finally {
+            setUploading(prev => ({ ...prev, [type]: false }));
+        }
+    }
+
     const tabs = [
         { id: 'general' as TabType, label: 'General', icon: Globe },
         { id: 'pwa' as TabType, label: 'PWA', icon: Smartphone },
@@ -187,6 +239,7 @@ export default function SiteConfigPage() {
         { id: 'seo' as TabType, label: 'SEO', icon: Search },
         { id: 'app' as TabType, label: 'App Settings', icon: Settings },
         { id: 'ads' as TabType, label: 'Ads', icon: Megaphone },
+        { id: 'api' as TabType, label: 'API', icon: Link },
     ];
 
     if (loading) {
@@ -291,25 +344,75 @@ export default function SiteConfigPage() {
                                 <label className="block text-sm font-medium text-zinc-400 mb-2">
                                     <ImageIcon className="w-4 h-4 inline mr-1" /> Logo URL
                                 </label>
-                                <input
-                                    type="url"
-                                    value={config.siteLogo || ''}
-                                    onChange={(e) => updateRootConfig('siteLogo', e.target.value)}
-                                    placeholder="https://example.com/logo.png"
-                                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
-                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        value={config.siteLogo || ''}
+                                        onChange={(e) => updateRootConfig('siteLogo', e.target.value)}
+                                        placeholder="https://example.com/logo.png"
+                                        className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
+                                    />
+                                    <input
+                                        type="file"
+                                        ref={logoInputRef}
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleFileUpload(file, 'logo');
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => logoInputRef.current?.click()}
+                                        disabled={uploading.logo}
+                                        className="px-4 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {uploading.logo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                {config.siteLogo && (
+                                    <div className="mt-2 p-2 bg-zinc-800/50 rounded-lg inline-block">
+                                        <img src={config.siteLogo} alt="Logo preview" className="h-10 max-w-[120px] object-contain" />
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-zinc-400 mb-2">
                                     <ImageIcon className="w-4 h-4 inline mr-1" /> Favicon URL
                                 </label>
-                                <input
-                                    type="url"
-                                    value={config.siteFavicon || ''}
-                                    onChange={(e) => updateRootConfig('siteFavicon', e.target.value)}
-                                    placeholder="https://example.com/favicon.ico"
-                                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
-                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        value={config.siteFavicon || ''}
+                                        onChange={(e) => updateRootConfig('siteFavicon', e.target.value)}
+                                        placeholder="https://example.com/favicon.ico"
+                                        className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
+                                    />
+                                    <input
+                                        type="file"
+                                        ref={faviconInputRef}
+                                        accept="image/*,.ico"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleFileUpload(file, 'favicon');
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => faviconInputRef.current?.click()}
+                                        disabled={uploading.favicon}
+                                        className="px-4 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {uploading.favicon ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                {config.siteFavicon && (
+                                    <div className="mt-2 p-2 bg-zinc-800/50 rounded-lg inline-block">
+                                        <img src={config.siteFavicon} alt="Favicon preview" className="h-8 w-8 object-contain" />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -515,12 +618,80 @@ export default function SiteConfigPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-zinc-400 mb-2">OG Image URL</label>
+                            <label className="block text-sm font-medium text-zinc-400 mb-2">
+                                <ImageIcon className="w-4 h-4 inline mr-1" /> OG Image URL
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="url"
+                                    value={config.seo.ogImage || ''}
+                                    onChange={(e) => updateConfig('seo', 'ogImage', e.target.value)}
+                                    placeholder="https://nearmatch.com/og-image.jpg"
+                                    className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
+                                />
+                                <input
+                                    type="file"
+                                    ref={ogImageInputRef}
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleFileUpload(file, 'ogImage');
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => ogImageInputRef.current?.click()}
+                                    disabled={uploading.ogImage}
+                                    className="px-4 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 transition-all flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {uploading.ogImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                </button>
+                            </div>
+                            {config.seo.ogImage && (
+                                <div className="mt-2 p-2 bg-zinc-800/50 rounded-lg inline-block">
+                                    <img src={config.seo.ogImage} alt="OG Image preview" className="h-20 max-w-[200px] object-contain rounded" />
+                                </div>
+                            )}
+                        </div>
+
+                        <hr className="border-zinc-700" />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-400 mb-2">Google Analytics ID</label>
+                                <input
+                                    type="text"
+                                    value={config.seo.googleAnalyticsId || ''}
+                                    onChange={(e) => updateConfig('seo', 'googleAnalyticsId', e.target.value)}
+                                    placeholder="G-XXXXXXXXXX"
+                                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-400 mb-2">Google Search Console Code</label>
+                                <input
+                                    type="text"
+                                    value={config.seo.googleConsoleVerification || ''}
+                                    onChange={(e) => updateConfig('seo', 'googleConsoleVerification', e.target.value)}
+                                    placeholder="Verification Code"
+                                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
+                                />
+                                <p className="mt-2 text-xs text-zinc-500">
+                                    The code from the meta tag content attribute
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr className="border-zinc-700" />
+
+                        <div>
+                            <label className="block text-sm font-medium text-zinc-400 mb-2">Google Tag Manager ID</label>
                             <input
-                                type="url"
-                                value={config.seo.ogImage || ''}
-                                onChange={(e) => updateConfig('seo', 'ogImage', e.target.value)}
-                                placeholder="https://nearmatch.com/og-image.jpg"
+                                type="text"
+                                value={config.seo.googleTagManagerId || ''}
+                                onChange={(e) => updateConfig('seo', 'googleTagManagerId', e.target.value)}
+                                placeholder="GTM-XXXXXXX"
                                 className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500"
                             />
                         </div>
@@ -790,6 +961,24 @@ export default function SiteConfigPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-zinc-400 mb-2">
+                                    Google AdSense Publisher ID
+                                </label>
+                                <input
+                                    type="text"
+                                    value={config.ads.googleAdSenseId || ''}
+                                    onChange={(e) => updateConfig('ads', 'googleAdSenseId', e.target.value)}
+                                    placeholder="ca-pub-XXXXXXXXXXXXXXXX"
+                                    className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-blue-500"
+                                />
+                                <p className="mt-2 text-xs text-zinc-500">
+                                    Format: ca-pub-1234567890123456
+                                </p>
+                            </div>
+
+                            <hr className="border-zinc-700" />
+
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-400 mb-2">
                                     Interstitial Ad Code (HTML)
                                 </label>
                                 <textarea
@@ -854,7 +1043,102 @@ export default function SiteConfigPage() {
                                 />
                             </div>
                         </div>
+                    </div>
+                )}
 
+                {/* API Tab */}
+                {activeTab === 'api' && (
+                    <div className="space-y-8">
+                        <div>
+                            <p className="text-zinc-400">
+                                Comprehensive list of public API endpoints for mobile app development and external integrations.
+                            </p>
+                        </div>
+
+                        {[
+                            {
+                                title: 'System & Configuration',
+                                endpoints: [
+                                    { method: 'GET', url: '/api/config', desc: 'Get public site configuration, IDs, and app rules' },
+                                    { method: 'GET', url: '/api/manifest', desc: 'Web App Manifest for PWA installation' },
+                                    { method: 'GET', url: '/sitemap.xml', desc: 'XML Sitemap for search engines' },
+                                ]
+                            },
+                            {
+                                title: 'Authentication',
+                                endpoints: [
+                                    { method: 'POST', url: '/api/auth/register', desc: 'Register a new user account' },
+                                    { method: 'GET', url: '/api/auth/session', desc: 'Get current user session (NextAuth)' },
+                                    { method: 'POST', url: '/api/auth/signin', desc: 'Sign in credentials (NextAuth)' },
+                                    { method: 'POST', url: '/api/auth/signout', desc: 'Sign out current user' },
+                                ]
+                            },
+                            {
+                                title: 'User Operations',
+                                endpoints: [
+                                    { method: 'GET', url: '/api/users/profile', desc: 'Get current user profile details' },
+                                    { method: 'PUT', url: '/api/users/profile', desc: 'Update user profile' },
+                                    { method: 'GET', url: '/api/users/nearby', desc: 'Get nearby users for discovery' },
+                                    { method: 'POST', url: '/api/users/swipe', desc: 'Swipe left/right on a user' },
+                                    { method: 'POST', url: '/api/users/boost', desc: 'Activate profile boost' },
+                                ]
+                            },
+                            {
+                                title: 'Communication',
+                                endpoints: [
+                                    { method: 'GET', url: '/api/matches', desc: 'Get list of matched users' },
+                                    { method: 'GET', url: '/api/messages?chatId={id}', desc: 'Get messages for a specific chat' },
+                                    { method: 'POST', url: '/api/messages', desc: 'Send a new message' },
+                                    { method: 'GET', url: '/api/notifications', desc: 'Get user notifications' },
+                                    { method: 'PUT', url: '/api/notifications', desc: 'Mark notifications as read' },
+                                ]
+                            },
+                            {
+                                title: 'Utilities',
+                                endpoints: [
+                                    { method: 'POST', url: '/api/upload', desc: 'Upload media files (images/videos)' },
+                                ]
+                            }
+                        ].map((category, catIndex) => (
+                            <div key={catIndex} className="space-y-4">
+                                <h3 className="text-lg font-semibold text-white border-b border-zinc-800 pb-2">
+                                    {category.title}
+                                </h3>
+                                <div className="grid gap-4">
+                                    {category.endpoints.map((api, index) => (
+                                        <div key={index} className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="space-y-1 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${api.method === 'GET' ? 'bg-blue-500/20 text-blue-400' :
+                                                        api.method === 'POST' ? 'bg-green-500/20 text-green-400' :
+                                                            api.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                                'bg-red-500/20 text-red-400'
+                                                        }`}>
+                                                        {api.method}
+                                                    </span>
+                                                    <code className="text-sm font-mono text-pink-400">
+                                                        {api.url}
+                                                    </code>
+                                                </div>
+                                                <p className="text-xs text-zinc-500">{api.desc}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    const fullUrl = `${config.siteUrl || window.location.origin}${api.url}`;
+                                                    navigator.clipboard.writeText(fullUrl);
+                                                    alert('Copied to clipboard!');
+                                                }}
+                                                className="self-start md:self-center p-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors flex items-center gap-2 text-xs"
+                                                title="Copy Full URL"
+                                            >
+                                                <Link className="w-4 h-4" />
+                                                <span className="md:hidden">Copy URL</span>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </motion.div>

@@ -51,12 +51,17 @@ export function NotificationManager({ onSubscriptionChange }: NotificationManage
             setPermission(result);
 
             if (result === 'granted') {
+                const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+                if (!vapidKey) {
+                    console.warn('VAPID public key not found. Push notifications disabled.');
+                    setLoading(false);
+                    return;
+                }
+
                 // Subscribe to push notifications
                 const sub = await serviceWorker.pushManager.subscribe({
                     userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(
-                        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-                    ) as any,
+                    applicationServerKey: urlBase64ToUint8Array(vapidKey) as any,
                 });
 
                 setSubscription(sub);
@@ -188,12 +193,17 @@ export function NotificationToggle() {
                 // Subscribe
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
+                    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+                    if (!vapidKey) {
+                        console.warn('VAPID public key not found');
+                        setLoading(false);
+                        return;
+                    }
+
                     const registration = await navigator.serviceWorker.ready;
                     const sub = await registration.pushManager.subscribe({
                         userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(
-                            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-                        ) as any,
+                        applicationServerKey: urlBase64ToUint8Array(vapidKey) as any,
                     });
                     await fetch('/api/notifications/subscribe', {
                         method: 'POST',

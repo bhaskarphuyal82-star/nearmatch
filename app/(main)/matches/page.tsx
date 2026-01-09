@@ -16,6 +16,7 @@ interface LikedByUser {
     dateOfBirth?: string;
     gender?: string;
     location?: { coordinates: [number, number] };
+    address?: string;
     interests?: string[];
     height?: string;
     weight?: string;
@@ -235,6 +236,12 @@ export default function LikesPage() {
                                             <div className="flex items-center gap-2 text-zinc-400 mt-1">
                                                 <GraduationCap className="w-4 h-4" />
                                                 <span>{selectedUser.educationLevel} {selectedUser.university ? `from ${selectedUser.university}` : ''}</span>
+                                            </div>
+                                        )}
+                                        {selectedUser.address && (
+                                            <div className="flex items-center gap-2 text-zinc-400 mt-1">
+                                                <MapPin className="w-4 h-4" />
+                                                <span>{selectedUser.address}</span>
                                             </div>
                                         )}
                                     </div>
