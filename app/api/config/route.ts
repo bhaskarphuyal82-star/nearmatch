@@ -33,7 +33,8 @@ export async function GET() {
                 interstitialInterval: config.ads.interstitialInterval,
                 rewardEnabled: config.ads.rewardEnabled,
                 rewardDuration: config.ads.rewardDuration,
-            }
+            },
+            legal: config.legal || {}
         };
 
         return NextResponse.json(publicConfig);

@@ -54,6 +54,7 @@ export async function PUT(request: Request) {
             if (updates.seo) config.seo = { ...config.seo, ...updates.seo };
             if (updates.app) config.app = { ...config.app, ...updates.app };
             if (updates.ads) config.ads = { ...config.ads, ...updates.ads };
+            if (updates.legal) config.legal = { ...config.legal, ...updates.legal };
 
             await config.save();
         }

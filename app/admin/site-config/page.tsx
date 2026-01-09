@@ -20,7 +20,9 @@ import {
     MapPin,
     Camera,
     Megaphone,
-    Upload
+    Upload,
+    FileText,
+    BookOpen
 } from 'lucide-react';
 
 interface SiteConfig {
@@ -79,6 +81,15 @@ interface SiteConfig {
             reward: string;
         };
     };
+    legal: {
+        about?: string;
+        privacyPolicy?: string;
+        termsService?: string;
+        cookiePolicy?: string;
+        communityGuidelines?: string;
+        noticeAtCollection?: string;
+        contactDetails?: string;
+    };
 }
 
 const defaultConfig: SiteConfig = {
@@ -121,9 +132,18 @@ const defaultConfig: SiteConfig = {
             reward: '',
         },
     },
+    legal: {
+        about: '',
+        privacyPolicy: '',
+        termsService: '',
+        cookiePolicy: '',
+        communityGuidelines: '',
+        noticeAtCollection: '',
+        contactDetails: '',
+    },
 };
 
-type TabType = 'general' | 'pwa' | 'social' | 'seo' | 'app' | 'ads' | 'api';
+type TabType = 'general' | 'pwa' | 'social' | 'seo' | 'app' | 'ads' | 'legal' | 'api';
 
 export default function SiteConfigPage() {
     const [config, setConfig] = useState<SiteConfig>(defaultConfig);
@@ -239,6 +259,7 @@ export default function SiteConfigPage() {
         { id: 'seo' as TabType, label: 'SEO', icon: Search },
         { id: 'app' as TabType, label: 'App Settings', icon: Settings },
         { id: 'ads' as TabType, label: 'Ads', icon: Megaphone },
+        { id: 'legal' as TabType, label: 'Legal Pages', icon: FileText },
         { id: 'api' as TabType, label: 'API', icon: Link },
     ];
 
@@ -1042,6 +1063,39 @@ export default function SiteConfigPage() {
                                     className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-blue-500 font-mono text-xs"
                                 />
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Legal Pages Tab */}
+                {activeTab === 'legal' && (
+                    <div className="space-y-6">
+                        <p className="text-zinc-400 mb-4">Manage the content of your legal and informational pages</p>
+
+                        <div className="grid grid-cols-1 gap-6">
+                            {[
+                                { key: 'about', label: 'About Us', icon: BookOpen },
+                                { key: 'privacyPolicy', label: 'Privacy Policy', icon: Shield },
+                                { key: 'termsService', label: 'Terms & Conditions', icon: FileText },
+                                { key: 'cookiePolicy', label: 'Cookie Policy', icon: Shield },
+                                { key: 'communityGuidelines', label: 'Community Guidelines', icon: Users },
+                                { key: 'noticeAtCollection', label: 'Notice At Collection', icon: Shield },
+                                { key: 'contactDetails', label: 'Contact Information', icon: Mail },
+                            ].map((page) => (
+                                <div key={page.key} className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-zinc-400">
+                                        <page.icon className="w-4 h-4" />
+                                        {page.label}
+                                    </label>
+                                    <textarea
+                                        value={config.legal[page.key as keyof typeof config.legal] || ''}
+                                        onChange={(e) => updateConfig('legal', page.key, e.target.value)}
+                                        rows={6}
+                                        placeholder={`Enter ${page.label} content here (supports plain text)...`}
+                                        className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-pink-500 resize-y"
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

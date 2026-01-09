@@ -227,9 +227,13 @@ export default function LandingPage() {
               </div>
               <span className="font-bold">NearMatch</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-zinc-400">
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-zinc-400">
+              <Link href="/about" className="hover:text-white transition-colors">About</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+              <Link href="/guidelines" className="hover:text-white transition-colors">Guidelines</Link>
+              <Link href="/collection-notice" className="hover:text-white transition-colors">Notice At Collection</Link>
               <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
             </div>
             <p className="text-sm text-zinc-500">

@@ -63,6 +63,17 @@ export interface ISiteConfig extends Document {
         };
     };
 
+    // Legal Pages
+    legal: {
+        about?: string;
+        privacyPolicy?: string;
+        termsService?: string;
+        cookiePolicy?: string;
+        communityGuidelines?: string;
+        noticeAtCollection?: string;
+        contactDetails?: string;
+    };
+
     // App Settings
     app: {
         maintenanceMode: boolean;
@@ -142,6 +153,16 @@ const SiteConfigSchema = new Schema<ISiteConfig>(
                 chat: { type: String, default: '' },
                 reward: { type: String, default: '' },
             },
+        },
+
+        legal: {
+            about: { type: String, default: '' },
+            privacyPolicy: { type: String, default: '' },
+            termsService: { type: String, default: '' },
+            cookiePolicy: { type: String, default: '' },
+            communityGuidelines: { type: String, default: '' },
+            noticeAtCollection: { type: String, default: '' },
+            contactDetails: { type: String, default: '' },
         },
 
         app: {
