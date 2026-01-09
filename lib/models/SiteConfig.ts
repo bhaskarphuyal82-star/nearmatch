@@ -72,6 +72,7 @@ export interface ISiteConfig extends Document {
         communityGuidelines?: string;
         noticeAtCollection?: string;
         contactDetails?: string;
+        homeContent?: string;
     };
 
     // App Settings
@@ -163,6 +164,7 @@ const SiteConfigSchema = new Schema<ISiteConfig>(
             communityGuidelines: { type: String, default: '' },
             noticeAtCollection: { type: String, default: '' },
             contactDetails: { type: String, default: '' },
+            homeContent: { type: String, default: '' },
         },
 
         app: {

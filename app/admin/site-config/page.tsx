@@ -89,6 +89,7 @@ interface SiteConfig {
         communityGuidelines?: string;
         noticeAtCollection?: string;
         contactDetails?: string;
+        homeContent?: string;
     };
 }
 
@@ -140,6 +141,7 @@ const defaultConfig: SiteConfig = {
         communityGuidelines: '',
         noticeAtCollection: '',
         contactDetails: '',
+        homeContent: '',
     },
 };
 
@@ -1081,6 +1083,7 @@ export default function SiteConfigPage() {
                                 { key: 'communityGuidelines', label: 'Community Guidelines', icon: Users },
                                 { key: 'noticeAtCollection', label: 'Notice At Collection', icon: Shield },
                                 { key: 'contactDetails', label: 'Contact Information', icon: Mail },
+                                { key: 'homeContent', label: 'Home Page Dynamic Content', icon: Globe },
                             ].map((page) => (
                                 <div key={page.key} className="space-y-2">
                                     <label className="flex items-center gap-2 text-sm font-medium text-zinc-400">

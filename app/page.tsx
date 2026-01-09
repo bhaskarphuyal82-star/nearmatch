@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart, MapPin, MessageCircle, Shield, Sparkles, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Heart, MapPin, MessageCircle, Shield, Sparkles, Users, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 
@@ -198,6 +199,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Dynamic Content Section */}
+      <DynamicHomeContent />
+
       {/* CTA Section */}
       <section className="relative z-10 py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -243,5 +247,53 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function DynamicHomeContent() {
+  const [content, setContent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchConfig() {
+      try {
+        const res = await fetch('/api/config');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.legal && data.legal.homeContent) {
+            setContent(data.legal.homeContent);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch home content:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchConfig();
+  }, []);
+
+  if (loading) return null;
+  if (!content) return null;
+
+  return (
+    <section className="relative z-10 py-24 border-t border-zinc-900">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="prose prose-invert max-w-none text-center"
+        >
+          <div className="space-y-4">
+            {content.split('\n').map((line, i) => (
+              <p key={i} className="text-xl text-zinc-400 leading-relaxed">
+                {line}
+              </p>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }
