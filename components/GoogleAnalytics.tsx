@@ -10,14 +10,15 @@ interface GoogleAnalyticsProps {
 export function GoogleAnalytics({ id }: GoogleAnalyticsProps) {
     const pathname = usePathname();
     const isAdmin = pathname?.startsWith('/admin');
+    const gaId = id || 'G-NMLXMDPW3E';
 
-    if (!id || isAdmin) return null;
+    if (!gaId || isAdmin) return null;
 
     return (
         <>
             <Script
                 strategy="afterInteractive"
-                src={`https://www.googletagmanager.com/gtag/js?id=${id}`}
+                src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
             />
             <Script
                 id="google-analytics"
@@ -27,7 +28,7 @@ export function GoogleAnalytics({ id }: GoogleAnalyticsProps) {
                     window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}
                     gtag('js', new Date());
-                    gtag('config', '${id}', {
+                    gtag('config', '${gaId}', {
                         page_path: window.location.pathname,
                     });
                     `,
