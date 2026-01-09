@@ -61,41 +61,51 @@ export const authOptions: NextAuthOptions = {
     ],
     callbacks: {
         async signIn({ user, account }) {
-            if (account?.provider === 'google') {
-                await connectDB();
+            try {
+                if (account?.provider === 'google') {
+                    await connectDB();
+                    console.log(`[SignIn] Google login for: ${user.email}`);
 
-                const existingUser = await User.findOne({ email: user.email });
+                    const existingUser = await User.findOne({ email: user.email });
 
-                if (existingUser) {
-                    if (existingUser.isBanned) {
-                        return false;
-                    }
-                    await User.findByIdAndUpdate(existingUser._id, { lastActive: new Date() });
-                } else {
-                    // Create new user from Google
-                    if (user.email && user.name) {
-                        await User.create({
-                            email: user.email,
-                            name: user.name,
-                            photos: user.image ? [user.image] : [],
-                            isVerified: true,
-                            // Set defaults for discovery
-                            dateOfBirth: new Date('2000-01-01'), // Default to ~24 years old
-                            gender: 'male', // Default (user should update)
-                            location: {
-                                type: 'Point',
-                                coordinates: [0, 0] // Default (user needs to update)
-                            },
-                            preferences: {
-                                ageRange: { min: 18, max: 100 },
-                                gender: 'both',
-                                distance: 100
-                            }
-                        });
+                    if (existingUser) {
+                        console.log(`[SignIn] Found existing user: ${existingUser._id}`);
+                        if (existingUser.isBanned) {
+                            console.log(`[SignIn] User is banned`);
+                            return false;
+                        }
+                        await User.findByIdAndUpdate(existingUser._id, { lastActive: new Date() });
+                    } else {
+                        console.log(`[SignIn] Creating new user for: ${user.email}`);
+                        // Create new user from Google
+                        if (user.email && user.name) {
+                            const newUser = await User.create({
+                                email: user.email,
+                                name: user.name,
+                                photos: user.image ? [user.image] : [],
+                                isVerified: true,
+                                // Set defaults for discovery
+                                dateOfBirth: new Date('2000-01-01'), // Default to ~24 years old
+                                gender: 'male', // Default (user should update)
+                                location: {
+                                    type: 'Point',
+                                    coordinates: [0, 0] // Default (user needs to update)
+                                },
+                                preferences: {
+                                    ageRange: { min: 18, max: 100 },
+                                    gender: 'both',
+                                    distance: 100
+                                }
+                            });
+                            console.log(`[SignIn] Created new user: ${newUser._id}`);
+                        }
                     }
                 }
+                return true;
+            } catch (error) {
+                console.error('[SignIn] Error:', error);
+                return false;
             }
-            return true;
         },
         async jwt({ token, user }) {
             if (user) {
