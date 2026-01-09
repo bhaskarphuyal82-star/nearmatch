@@ -13,6 +13,7 @@ interface User {
     gender?: string;
     dateOfBirth?: string;
     distance: number;
+    lastActive?: string;
 }
 
 function calculateAge(dateOfBirth: string): number {
@@ -24,6 +25,13 @@ function calculateAge(dateOfBirth: string): number {
         age--;
     }
     return age;
+}
+
+function isOnline(lastActive?: string): boolean {
+    if (!lastActive) return false;
+    const lastActiveDate = new Date(lastActive);
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    return lastActiveDate > fiveMinutesAgo;
 }
 
 export default function DiscoverPage() {
@@ -85,11 +93,33 @@ export default function DiscoverPage() {
 
             if (data && data.length > 0) {
                 const place = data[0];
+                const lat = parseFloat(place.lat);
+                const lng = parseFloat(place.lon);
+
                 setCustomLocation({
-                    lat: parseFloat(place.lat),
-                    lng: parseFloat(place.lon),
+                    lat,
+                    lng,
                     name: place.display_name.split(',')[0]
                 });
+
+                // Update profile location on every successful search
+                // This allows user to "travel" and be visible in the new location
+                try {
+                    await fetch('/api/users/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            location: {
+                                type: 'Point',
+                                coordinates: [lng, lat] // MongoDB expects [lng, lat]
+                            }
+                        })
+                    });
+                    setLocationError(false);
+                } catch (err) {
+                    console.error('Failed to update profile location:', err);
+                }
+
                 setShowLocationSearch(false);
                 setSearchQuery('');
             } else {
@@ -103,7 +133,8 @@ export default function DiscoverPage() {
         }
     }
 
-    function handleEnableLocation() {
+    // ... existing handleEnableLocation, handleSwipe, handleDragEnd ... 
+    async function handleEnableLocation() {
         setLoading(true);
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -128,10 +159,6 @@ export default function DiscoverPage() {
 
                         // Retry fetching users
                         setLocationError(false);
-                        // fetchUsers will be triggered because customLocation changed to null, or we call explicitly?
-                        // If we customized fetchUsers to depend on customLocation, changing it to null triggers reload.
-                        // But if it was already null (initial error state), setting it to null won't trigger effect.
-                        // So calling fetchUsers directly is safer.
                         fetchUsers();
                     } catch (error) {
                         console.error('Failed to update location:', error);
@@ -193,7 +220,7 @@ export default function DiscoverPage() {
 
     const currentUser = users[currentIndex];
 
-    // Render Location Search Modal
+    // ... renderLocationSearch ...
     const renderLocationSearch = () => (
         <AnimatePresence>
             {showLocationSearch && (
@@ -344,6 +371,7 @@ export default function DiscoverPage() {
                 <AnimatePresence>
                     {users.slice(currentIndex, currentIndex + 2).reverse().map((user, index) => {
                         const isTop = index === (users.slice(currentIndex, currentIndex + 2).length - 1);
+                        const isUserOnline = isOnline(user.lastActive);
 
                         return (
                             <motion.div
@@ -385,12 +413,26 @@ export default function DiscoverPage() {
 
                                     {/* User Info */}
                                     <div className="absolute bottom-0 left-0 right-0 p-6">
-                                        <h2 className="text-2xl font-bold text-white">
-                                            {user.name}
-                                            {user.dateOfBirth && (
-                                                <span className="font-normal">, {calculateAge(user.dateOfBirth)}</span>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h2 className="text-2xl font-bold text-white">
+                                                {user.name}
+                                                {user.dateOfBirth && (
+                                                    <span className="font-normal">, {calculateAge(user.dateOfBirth)}</span>
+                                                )}
+                                            </h2>
+                                            {isUserOnline && (
+                                                <div className="flex items-center gap-1 bg-green-500/20 px-2 py-0.5 rounded-full border border-green-500/50">
+                                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                                    <span className="text-xs text-green-400 font-medium tracking-wide">ONLINE</span>
+                                                </div>
                                             )}
-                                        </h2>
+                                            {!isUserOnline && user.lastActive && (
+                                                <div className="flex items-center gap-1 bg-zinc-500/20 px-2 py-0.5 rounded-full border border-zinc-500/50">
+                                                    <span className="text-xs text-zinc-400 font-medium">OFFLINE</span>
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <div className="flex items-center gap-2 mt-1 text-zinc-300">
                                             <MapPin className="w-4 h-4" />
                                             <span>{user.distance} km away</span>

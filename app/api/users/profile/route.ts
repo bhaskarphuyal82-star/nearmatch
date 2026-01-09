@@ -49,6 +49,17 @@ export async function PUT(request: Request) {
             'location',
             'preferences',
             'onboardingComplete',
+            // New fields
+            'phoneNumber',
+            'interests',
+            'height',
+            'weight',
+            'relationshipGoal',
+            'lifestyle',
+            'jobTitle',
+            'company',
+            'educationLevel',
+            'university',
         ];
 
         // Filter only allowed fields

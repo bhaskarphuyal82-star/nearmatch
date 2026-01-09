@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import { connectDB } from '@/lib/db';
 import Match from '@/lib/models/Match';
+import User from '@/lib/models/User';
 
 export async function GET() {
     try {
@@ -18,8 +19,14 @@ export async function GET() {
             users: session.user.id,
             isActive: true,
         })
-            .populate('users', 'name photos lastActive')
+            .populate('users', 'name photos lastActive isBanned')
             .sort({ lastMessage: -1, matchedAt: -1 });
+
+        // Find users who have liked the current user
+        const likedByUsers = await User.find({
+            likedUsers: session.user.id,
+            _id: { $nin: matches.flatMap(m => m.users.map(u => u._id)) }, // Exclude already matched users
+        }).select('name photos lastActive bio dateOfBirth gender location interests height weight relationshipGoal lifestyle jobTitle company educationLevel university isBanned');
 
         // Format matches with the other user's info
         const formattedMatches = matches.map((match) => {
@@ -34,7 +41,10 @@ export async function GET() {
             };
         });
 
-        return NextResponse.json({ matches: formattedMatches });
+        return NextResponse.json({
+            matches: formattedMatches,
+            likedBy: likedByUsers
+        });
     } catch (error) {
         console.error('Get matches error:', error);
         return NextResponse.json(

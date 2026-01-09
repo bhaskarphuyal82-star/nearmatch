@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PWAInstallPrompt } from "@/components/ui/PWAInstallPrompt";
 import { InterstitialAd } from "@/components/ui/InterstitialAd";
+import { Providers } from "@/components/providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,11 +62,14 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="NearMatch" />
       </head>
       <body
+        suppressHydrationWarning={true}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <PWAInstallPrompt />
-        <InterstitialAd />
+        <Providers>
+          {children}
+          <PWAInstallPrompt />
+          <InterstitialAd />
+        </Providers>
       </body>
     </html>
   );

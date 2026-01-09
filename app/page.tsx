@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { Heart, MapPin, MessageCircle, Shield, Sparkles, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 
 export default function LandingPage() {
+  const { data: session, status } = useSession();
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white overflow-hidden">
       {/* Animated Background */}
@@ -24,18 +27,36 @@ export default function LandingPage() {
               <span className="text-xl font-bold">NearMatch</span>
             </Link>
             <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-                className="px-4 py-2 text-zinc-300 hover:text-white transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 font-medium hover:opacity-90 transition-opacity"
-              >
-                Get Started
-              </Link>
+              {status === 'loading' ? (
+                <div className="w-20 h-8 bg-zinc-800 rounded-full animate-pulse" />
+              ) : session?.user ? (
+                <>
+                  <span className="hidden sm:inline-block text-zinc-300">
+                    Welcome back, <span className="text-white font-medium">{session.user.name?.split(' ')[0] || 'User'}</span>
+                  </span>
+                  <Link
+                    href={session.user.role === 'admin' ? '/admin' : '/discover'}
+                    className="px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Go to App
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="px-4 py-2 text-zinc-300 hover:text-white transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

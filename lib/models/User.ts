@@ -28,6 +28,23 @@ export interface IUser extends Document {
     boostedUntil?: Date;
     createdAt: Date;
     updatedAt: Date;
+    // New Onboarding Fields
+    phoneNumber?: string;
+    interests: string[];
+    height?: string;
+    weight?: string;
+    relationshipGoal?: string;
+    lifestyle?: {
+        smoking?: string;
+        drinking?: string;
+        workout?: string;
+        diet?: string;
+        pets?: string;
+    };
+    jobTitle?: string;
+    company?: string;
+    educationLevel?: string;
+    university?: string;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -118,6 +135,47 @@ const UserSchema = new Schema<IUser>(
         boostedUntil: {
             type: Date,
         },
+        phoneNumber: {
+            type: String,
+            trim: true,
+        },
+        interests: {
+            type: [String],
+            default: [],
+        },
+        height: {
+            type: String,
+        },
+        weight: {
+            type: String,
+        },
+        relationshipGoal: {
+            type: String,
+            enum: ['Long-term relationship', 'Something casual', 'New friends', 'Still figuring it out'],
+        },
+        lifestyle: {
+            smoking: { type: String, enum: ['Never', 'Socially', 'Regularly', 'Trying to quit'] },
+            drinking: { type: String, enum: ['Never', 'Socially', 'Regularly'] },
+            workout: { type: String, enum: ['Never', 'Sometimes', 'Regularly', 'Athlete'] },
+            diet: { type: String, enum: ['None', 'Vegan', 'Vegetarian', 'Keto', 'Pescatarian', 'Other'] },
+            pets: { type: String, enum: ['No pets', 'Dog lover', 'Cat lover', 'Other', 'All kinds'] },
+        },
+        jobTitle: {
+            type: String,
+            trim: true,
+        },
+        company: {
+            type: String,
+            trim: true,
+        },
+        educationLevel: {
+            type: String,
+            enum: ['High School', 'Undergrad', 'Postgrad', 'Doctorate', 'Other'],
+        },
+        university: {
+            type: String,
+            trim: true,
+        },
     },
     {
         timestamps: true,
@@ -128,7 +186,7 @@ const UserSchema = new Schema<IUser>(
 UserSchema.index({ location: '2dsphere' });
 
 // Index for efficient queries
-UserSchema.index({ email: 1 });
+
 UserSchema.index({ role: 1 });
 UserSchema.index({ isBanned: 1 });
 UserSchema.index({ lastActive: -1 });

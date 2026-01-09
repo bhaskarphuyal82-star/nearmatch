@@ -5,7 +5,7 @@ export interface IMessage extends Document {
     match: mongoose.Types.ObjectId;
     sender: mongoose.Types.ObjectId;
     content: string;
-    type: 'text' | 'image' | 'gif';
+    type: 'text' | 'image' | 'gif' | 'sticker';
     isRead: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -30,7 +30,7 @@ const MessageSchema = new Schema<IMessage>(
         },
         type: {
             type: String,
-            enum: ['text', 'image', 'gif'],
+            enum: ['text', 'image', 'gif', 'sticker'],
             default: 'text',
         },
         isRead: {

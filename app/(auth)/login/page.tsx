@@ -1,18 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Heart, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        const errorType = searchParams.get('error');
+        if (errorType === 'Banned') {
+            setError('Your account has been permanently suspended due to violation of our terms.');
+        } else if (errorType) {
+            setError(errorType);
+        }
+    }, [searchParams]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -29,7 +39,15 @@ export default function LoginPage() {
             if (result?.error) {
                 setError(result.error);
             } else {
-                router.push('/discover');
+                // Check user role for redirect
+                const res = await fetch('/api/auth/session');
+                const session = await res.json();
+
+                if (session?.user?.role === 'admin') {
+                    router.push('/admin');
+                } else {
+                    router.push('/discover');
+                }
                 router.refresh();
             }
         } catch {
@@ -87,7 +105,10 @@ export default function LoginPage() {
                                 <input
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        setError('');
+                                    }}
                                     placeholder="your@email.com"
                                     required
                                     className="w-full pl-12 pr-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition-colors"
@@ -104,7 +125,10 @@ export default function LoginPage() {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        setError('');
+                                    }}
                                     placeholder="••••••••"
                                     required
                                     className="w-full pl-12 pr-12 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition-colors"
@@ -182,5 +206,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-zinc-950 flex items-center justify-center"><Loader2 className="w-10 h-10 text-pink-500 animate-spin" /></div>}>
+            <LoginForm />
+        </Suspense>
     );
 }

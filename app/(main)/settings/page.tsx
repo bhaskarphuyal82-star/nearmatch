@@ -21,7 +21,16 @@ import { NotificationToggle } from '@/components/ui/NotificationManager';
 export default function SettingsPage() {
     const router = useRouter();
 
-    const settingsSections = [
+    interface SettingItem {
+        icon: any;
+        label: string;
+        description?: string;
+        action: null;
+        toggle?: boolean;
+        enabled?: boolean;
+    }
+
+    const settingsSections: { title: string; items: SettingItem[] }[] = [
         {
             title: 'Preferences',
             items: [

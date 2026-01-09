@@ -4,6 +4,7 @@ import { authOptions } from '../auth/[...nextauth]/route';
 import { connectDB } from '@/lib/db';
 import Message from '@/lib/models/Message';
 import Match from '@/lib/models/Match';
+import User from '@/lib/models/User';
 
 // Get messages for a match
 export async function GET(request: Request) {
@@ -86,6 +87,15 @@ export async function POST(request: Request) {
 
         await connectDB();
 
+        // Check if user is banned
+        const user = await User.findById(session.user.id).select('isBanned');
+        if (user?.isBanned) {
+            return NextResponse.json(
+                { error: 'You are banned from sending messages.' },
+                { status: 403 }
+            );
+        }
+
         // Verify user is part of this match
         const match = await Match.findOne({
             _id: matchId,
@@ -95,6 +105,19 @@ export async function POST(request: Request) {
 
         if (!match) {
             return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+        }
+
+        // Check if recipient is banned
+        // @ts-ignore
+        const otherUser = match.users.find((u: any) => u.toString() !== session.user.id);
+        if (otherUser) {
+            const recipient = await User.findById(otherUser).select('isBanned');
+            if (recipient?.isBanned) {
+                return NextResponse.json(
+                    { error: 'This user is currently unavailable.' },
+                    { status: 403 }
+                );
+            }
         }
 
         // Create message

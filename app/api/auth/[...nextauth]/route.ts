@@ -19,15 +19,17 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 await connectDB();
+                console.log(`[Authorize] Attempting login for: ${credentials.email}`);
 
                 const user = await User.findOne({ email: credentials.email }).select('+password');
+                console.log(`[Authorize] User found: ${user ? user.email : 'None'}, isBanned: ${user?.isBanned}`);
 
                 if (!user) {
                     throw new Error('No user found with this email');
                 }
 
                 if (user.isBanned) {
-                    throw new Error('Your account has been suspended');
+                    throw new Error(`Your account (${user.email}) has been suspended`);
                 }
 
                 if (!user.password) {
@@ -110,6 +112,15 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
+
+                // Check if user is banned (fresh check)
+                await connectDB();
+                const user = await User.findById(token.id).select('isBanned email');
+                console.log(`[Session Callback] Checking ban for user ${user?.email} (${token.id}): isBanned=${user?.isBanned}`);
+
+                if (user?.isBanned) {
+                    session.user.isBanned = true;
+                }
             }
             return session;
         },
