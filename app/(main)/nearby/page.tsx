@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, MapPin, Loader2, MessageCircle, X, Heart, Briefcase, GraduationCap } from 'lucide-react';
+import { SlidersHorizontal, MapPin, Loader2, MessageCircle, X, Heart, Briefcase, GraduationCap, Search } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 interface NearbyUser {
@@ -36,14 +36,33 @@ export default function NearbyPage() {
     const [users, setUsers] = useState<NearbyUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<NearbyUser | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({
+        gender: 'both',
+        ageRange: [18, 50],
+        distance: 50,
+        onlineOnly: false,
+    });
+
+    const [showLocationSearch, setShowLocationSearch] = useState(false);
+    const [customLocation, setCustomLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchingLocation, setSearchingLocation] = useState(false);
 
     useEffect(() => {
         fetchNearbyUsers();
-    }, []);
+    }, [customLocation, filters]);
 
     async function fetchNearbyUsers() {
         try {
-            const res = await fetch('/api/users/nearby');
+            setLoading(true);
+            let url = `/api/users/nearby?gender=${filters.gender}&ageMin=${filters.ageRange[0]}&ageMax=${filters.ageRange[1]}&distance=${filters.distance}&onlineOnly=${filters.onlineOnly}`;
+
+            if (customLocation) {
+                url += `&lat=${customLocation.lat}&lng=${customLocation.lng}`;
+            }
+
+            const res = await fetch(url);
             const data = await res.json();
             if (data.users) {
                 setUsers(data.users);
@@ -52,6 +71,54 @@ export default function NearbyPage() {
             console.error('Failed to fetch nearby users:', error);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleLocationSearch(e: React.FormEvent) {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+
+        setSearchingLocation(true);
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+            const data = await res.json();
+
+            if (data && data.length > 0) {
+                const place = data[0];
+                const lat = parseFloat(place.lat);
+                const lng = parseFloat(place.lon);
+
+                setCustomLocation({
+                    lat,
+                    lng,
+                    name: place.display_name.split(',')[0]
+                });
+
+                // Update profile location on every successful search
+                try {
+                    await fetch('/api/users/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            location: {
+                                type: 'Point',
+                                coordinates: [lng, lat]
+                            }
+                        })
+                    });
+                } catch (err) {
+                    console.error('Failed to update profile location:', err);
+                }
+
+                setShowLocationSearch(false);
+                setSearchQuery('');
+            } else {
+                alert('Location not found');
+            }
+        } catch (error) {
+            console.error('Location search failed:', error);
+        } finally {
+            setSearchingLocation(false);
         }
     }
 
@@ -71,18 +138,200 @@ export default function NearbyPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
                 <h1 className="text-2xl font-bold text-white">Nearby</h1>
-                <div className="flex gap-4">
-                    <Link href="/discover" className="p-2 rounded-full hover:bg-zinc-800 transition-colors">
-                        <Loader2 className="w-6 h-6 text-pink-500" />
-                    </Link>
-                    <button className="p-2 rounded-full hover:bg-zinc-800 transition-colors">
-                        <SlidersHorizontal className="w-6 h-6 text-white" />
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowLocationSearch(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-white"
+                    >
+                        <MapPin className="w-4 h-4 text-pink-500" />
+                        <span className="text-sm font-medium">{customLocation ? customLocation.name : 'Nearby'}</span>
+                    </button>
+                    <button
+                        onClick={() => setShowFilters(true)}
+                        className={`p-2 rounded-full transition-colors ${showFilters ? 'bg-pink-500 text-white' : 'hover:bg-zinc-800 text-white'}`}
+                    >
+                        <SlidersHorizontal className="w-6 h-6" />
                     </button>
                 </div>
             </div>
             <p className="text-zinc-400 text-sm mb-6">
                 Good vibes and great chats start here. Chat now, match later.
             </p>
+
+            {/* Modal Components */}
+            <AnimatePresence>
+                {showLocationSearch && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+                        onClick={() => setShowLocationSearch(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-zinc-900 rounded-3xl p-6 w-full max-w-sm border border-zinc-800 shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-white">Search Location</h3>
+                                <button onClick={() => setShowLocationSearch(false)} className="p-2 -mr-2 text-zinc-400 hover:text-white">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <form onSubmit={handleLocationSearch} className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Enter city name..."
+                                    className="flex-1 px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500 transition-colors"
+                                    autoFocus
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={searchingLocation}
+                                    className="px-4 py-3 rounded-xl bg-pink-500 text-white font-medium hover:bg-pink-600 disabled:opacity-50"
+                                >
+                                    {searchingLocation ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-4 h-4" />}
+                                </button>
+                            </form>
+                            <button
+                                onClick={() => {
+                                    setCustomLocation(null);
+                                    setShowLocationSearch(false);
+                                }}
+                                className="mt-4 w-full py-3 rounded-xl border border-zinc-700 text-zinc-300 hover:bg-zinc-800 flex items-center justify-center gap-2"
+                            >
+                                <MapPin className="w-4 h-4 text-pink-500" />
+                                Use My Current Location
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {showFilters && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/80 p-0 sm:p-4 backdrop-blur-sm"
+                        onClick={() => setShowFilters(false)}
+                    >
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            className="bg-zinc-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 w-full max-w-md border-t sm:border border-zinc-800 shadow-2xl overflow-y-auto max-h-[90vh]"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-2xl font-bold text-white">Filter Matches</h3>
+                                <button onClick={() => setShowFilters(false)} className="p-2 -mr-2 text-zinc-400 hover:text-white">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-8">
+                                {/* Gender */}
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-400 mb-4 tracking-wider uppercase">Show me</label>
+                                    <div className="grid grid-cols-3 gap-2 p-1 bg-zinc-800 rounded-2xl border border-zinc-700">
+                                        {['male', 'female', 'both'].map((g) => (
+                                            <button
+                                                key={g}
+                                                onClick={() => setFilters({ ...filters, gender: g })}
+                                                className={`py-2.5 rounded-xl text-sm font-bold capitalize transition-all duration-300 ${filters.gender === g ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg' : 'text-zinc-500'}`}
+                                            >
+                                                {g}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Age Range */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <label className="text-sm font-medium text-zinc-400 tracking-wider uppercase">Age Range</label>
+                                        <span className="text-pink-500 font-bold">{filters.ageRange[0]} - {filters.ageRange[1]}</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="18"
+                                        max="80"
+                                        value={filters.ageRange[1]}
+                                        onChange={(e) => setFilters({ ...filters, ageRange: [filters.ageRange[0], parseInt(e.target.value)] })}
+                                        className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                                    />
+                                </div>
+
+                                {/* Distance */}
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <label className="text-sm font-medium text-zinc-400 tracking-wider uppercase">Max Distance</label>
+                                        <span className="text-pink-500 font-bold">{filters.distance} km</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="500"
+                                        value={filters.distance}
+                                        onChange={(e) => setFilters({ ...filters, distance: parseInt(e.target.value) })}
+                                        className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                                    />
+                                </div>
+
+                                {/* Online Now */}
+                                <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/50 border border-zinc-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-bold text-sm">Online Now</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setFilters({ ...filters, onlineOnly: !filters.onlineOnly })}
+                                        className={`w-12 h-6 rounded-full transition-colors relative ${filters.onlineOnly ? 'bg-pink-500' : 'bg-zinc-700'}`}
+                                    >
+                                        <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${filters.onlineOnly ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+
+                                {/* Location Selector Row */}
+                                <div
+                                    onClick={() => {
+                                        setShowFilters(false);
+                                        setShowLocationSearch(true);
+                                    }}
+                                    className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center">
+                                            <MapPin className="w-5 h-5 text-pink-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-bold text-sm">Location</p>
+                                            <p className="text-xs text-zinc-500">{customLocation ? customLocation.name : 'Nearby (Current)'}</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-pink-500 text-sm font-bold">Change</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setShowFilters(false)}
+                                className="mt-10 w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-lg"
+                            >
+                                Apply Filters
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Featured User - "Connect instantly" */}
             {featuredUser && (

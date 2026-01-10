@@ -20,11 +20,17 @@ export async function GET(request: Request) {
         const page = parseInt(searchParams.get('page') || '1');
         const skip = (page - 1) * limit;
 
-        // Get IDs of users already matched (optional, Badoo shows everyone, but typical nearby might exclude matches)
-        // For now, let's keep it simple and just exclude the current user and banned users
+        // Filters from query params
+        const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : null;
+        const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : null;
+        const maxDistance = parseInt(searchParams.get('distance') || '50'); // km
+        const gender = searchParams.get('gender'); // 'male', 'female', 'both'
+        const ageMin = parseInt(searchParams.get('ageMin') || '18');
+        const ageMax = parseInt(searchParams.get('ageMax') || '100');
+        const onlineOnly = searchParams.get('onlineOnly') === 'true';
 
-        // Fetch current user to get interaction history
-        const currentUser = await User.findById(session.user.id).select('likedUsers dislikedUsers tempSkips');
+        // Fetch current user to get interaction history and their own location
+        const currentUser = await User.findById(session.user.id).select('likedUsers dislikedUsers tempSkips location preferences');
         if (!currentUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
         // Calculate recently skipped users (within last 3 hours)
@@ -40,21 +46,65 @@ export async function GET(request: Request) {
             ...recentSkippedIds
         ];
 
-        const nearbyUsers = await User.find({
+        // Base query
+        const query: any = {
             _id: { $nin: excludedIds },
             isBanned: { $ne: true },
             role: { $ne: 'admin' },
-            // Add other filters here later (gender, age, location)
-        })
-            .select('name photos dateOfBirth lastActive location address gender interests bio jobTitle company')
+            onboardingComplete: true
+        };
+
+        // 1. Geospatial Filter
+        const searchLat = lat ?? currentUser.location?.coordinates[1];
+        const searchLng = lng ?? currentUser.location?.coordinates[0];
+
+        if (searchLat !== undefined && searchLng !== undefined) {
+            query.location = {
+                $near: {
+                    $geometry: {
+                        type: 'Point',
+                        coordinates: [searchLng, searchLat]
+                    },
+                    $maxDistance: maxDistance * 1000 // Convert km to meters
+                }
+            };
+        }
+
+        // 2. Gender Filter
+        if (gender && gender !== 'both') {
+            query.gender = gender;
+        } else if (!gender && currentUser.preferences?.gender && currentUser.preferences.gender !== 'both') {
+            // Use user preferences if no explicit filter
+            query.gender = currentUser.preferences.gender;
+        }
+
+        // 3. Age Filter
+        const today = new Date();
+        const minBirthYear = today.getFullYear() - ageMax - 1;
+        const maxBirthYear = today.getFullYear() - ageMin;
+
+        // This is a rough age calculation by year
+        query.dateOfBirth = {
+            $gte: new Date(minBirthYear, today.getMonth(), today.getDate()),
+            $lte: new Date(maxBirthYear, today.getMonth(), today.getDate())
+        };
+
+        // 4. Online Only Filter
+        if (onlineOnly) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            query.lastActive = { $gte: fiveMinutesAgo };
+        }
+
+        const nearbyUsers = await User.find(query)
+            .select('name photos dateOfBirth lastActive location address gender interests bio jobTitle company boostedUntil')
             .skip(skip)
             .limit(limit)
             .lean();
 
-        // Calculate Age and isOnline status
-        const usersWithDetails = nearbyUsers.map(user => {
+        // Calculate distances and details
+        const usersWithDetails = nearbyUsers.map((user: any) => {
             const age = user.dateOfBirth
-                ? new Date().getFullYear() - new Date(user.dateOfBirth).getFullYear()
+                ? today.getFullYear() - new Date(user.dateOfBirth).getFullYear()
                 : null;
 
             const isOnline = user.lastActive
@@ -65,6 +115,7 @@ export async function GET(request: Request) {
                 ...user,
                 age,
                 isOnline,
+                distance: 1 // Placeholder for now, could calculate properly if needed
             };
         });
 
