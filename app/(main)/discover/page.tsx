@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { Heart, X, MapPin, Loader2, Sparkles, Search } from 'lucide-react';
+import { Heart, X, MapPin, Loader2, Sparkles, Search, SlidersHorizontal } from 'lucide-react';
+import FilterModal from '@/components/FilterModal';
 import Image from 'next/image';
 
 interface User {
@@ -48,6 +49,7 @@ export default function DiscoverPage() {
         onlineOnly: false,
     });
 
+
     const [locationError, setLocationError] = useState(false);
     const [showLocationSearch, setShowLocationSearch] = useState(false);
     const [customLocation, setCustomLocation] = useState<{ lat: number; lng: number; name: string } | null>(null);
@@ -55,6 +57,7 @@ export default function DiscoverPage() {
     const [searchingLocation, setSearchingLocation] = useState(false);
 
     useEffect(() => {
+        setCurrentIndex(0);
         fetchUsers();
     }, [customLocation, filters]);
 
@@ -141,6 +144,15 @@ export default function DiscoverPage() {
     }
 
     // ... existing handleEnableLocation, handleSwipe, handleDragEnd ... 
+    const handleApplyFilters = (newFilters: any) => {
+        setFilters(newFilters);
+        setShowFilters(false);
+    };
+
+    const handleOpenFilters = () => {
+        setShowFilters(true);
+    };
+
     async function handleEnableLocation() {
         setLoading(true);
         if ('geolocation' in navigator) {
@@ -286,203 +298,19 @@ export default function DiscoverPage() {
 
     const renderFilters = () => (
         <AnimatePresence>
-            {showFilters && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 p-0 sm:p-4 backdrop-blur-sm"
-                    onClick={() => setShowFilters(false)}
-                >
-                    <motion.div
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100%' }}
-                        className="bg-zinc-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 w-full max-w-md border-t sm:border border-zinc-800 shadow-2xl overflow-y-auto max-h-[90vh]"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-2xl font-bold text-white">Filter Matches</h3>
-                            <button onClick={() => setShowFilters(false)} className="p-2 -mr-2 text-zinc-400 hover:text-white">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-8">
-                            {/* Gender */}
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-400 mb-4 tracking-wider uppercase">Show me</label>
-                                <div className="grid grid-cols-3 gap-2 p-1 bg-zinc-800 rounded-2xl border border-zinc-700">
-                                    {['male', 'female', 'both'].map((g) => (
-                                        <button
-                                            key={g}
-                                            onClick={() => setFilters({ ...filters, gender: g })}
-                                            className={`py-2.5 rounded-xl text-sm font-bold capitalize transition-all duration-300 ${filters.gender === g
-                                                ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg'
-                                                : 'text-zinc-500 hover:text-zinc-300'
-                                                }`}
-                                        >
-                                            {g}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Age Range */}
-                            <div>
-                                <div className="flex justify-between items-center mb-4">
-                                    <label className="text-sm font-medium text-zinc-400 tracking-wider uppercase">Age Range</label>
-                                    <span className="text-pink-500 font-bold">{filters.ageRange[0]} - {filters.ageRange[1]}</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="18"
-                                    max="80"
-                                    value={filters.ageRange[1]}
-                                    onChange={(e) => setFilters({ ...filters, ageRange: [filters.ageRange[0], parseInt(e.target.value)] })}
-                                    className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
-                                />
-                            </div>
-
-                            {/* Distance */}
-                            <div>
-                                <div className="flex justify-between items-center mb-4">
-                                    <label className="text-sm font-medium text-zinc-400 tracking-wider uppercase">Max Distance</label>
-                                    <span className="text-pink-500 font-bold">{filters.distance} km</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="500"
-                                    value={filters.distance}
-                                    onChange={(e) => setFilters({ ...filters, distance: parseInt(e.target.value) })}
-                                    className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-pink-500"
-                                />
-                            </div>
-
-                            {/* Online Now */}
-                            <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/50 border border-zinc-700/50">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                                    </div>
-                                    <div>
-                                        <p className="text-white font-bold text-sm">Online Now</p>
-                                        <p className="text-xs text-zinc-500">Only show users active recently</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setFilters({ ...filters, onlineOnly: !filters.onlineOnly })}
-                                    className={`w-12 h-6 rounded-full transition-colors relative ${filters.onlineOnly ? 'bg-pink-500' : 'bg-zinc-700'}`}
-                                >
-                                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${filters.onlineOnly ? 'translate-x-6' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-
-                            {/* Location (ReadOnly here, link to dedicated search) */}
-                            <div
-                                onClick={() => {
-                                    setShowFilters(false);
-                                    setShowLocationSearch(true);
-                                }}
-                                className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800 transition-colors"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center">
-                                        <MapPin className="w-5 h-5 text-pink-500" />
-                                    </div>
-                                    <div>
-                                        <p className="text-white font-bold text-sm">Location</p>
-                                        <p className="text-xs text-zinc-500">{customLocation ? customLocation.name : 'Nearby (Current)'}</p>
-                                    </div>
-                                </div>
-                                <span className="text-pink-500 text-sm font-bold">Change</span>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => setShowFilters(false)}
-                            className="mt-10 w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-black text-lg shadow-xl shadow-pink-500/20 active:scale-95 transition-all"
-                        >
-                            Apply Filters
-                        </button>
-                    </motion.div>
-                </motion.div>
-            )}
+            <FilterModal
+                isOpen={showFilters}
+                onClose={() => setShowFilters(false)}
+                onApply={handleApplyFilters}
+                initialFilters={filters}
+                currentLocationName={customLocation ? customLocation.name : 'Nearby (Current)'}
+                onLocationClick={() => {
+                    setShowFilters(false);
+                    setShowLocationSearch(true);
+                }}
+            />
         </AnimatePresence>
     );
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-[calc(100vh-5rem)]">
-                <Loader2 className="w-10 h-10 text-pink-500 animate-spin" />
-            </div>
-        );
-    }
-
-    if (locationError) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-5rem)] text-center px-8">
-                <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mb-6">
-                    <MapPin className="w-10 h-10 text-pink-400" />
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Enable Location</h2>
-                <p className="text-zinc-400 max-w-sm mb-6">
-                    We need your location to find matches nearby. Please enable location access.
-                </p>
-                <div className="flex flex-col gap-3">
-                    <button
-                        onClick={handleEnableLocation}
-                        className="px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium"
-                    >
-                        Enable Location
-                    </button>
-                    <button
-                        onClick={() => setShowLocationSearch(true)}
-                        className="text-pink-400 hover:text-pink-300 text-sm font-medium"
-                    >
-                        Or search manually
-                    </button>
-                </div>
-                {renderLocationSearch()}
-            </div>
-        );
-    }
-
-    if (users.length === 0 || !currentUser) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-5rem)] text-center px-8">
-                <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mb-6">
-                    <Sparkles className="w-10 h-10 text-pink-400" />
-                </div>
-                <h2 className="text-2xl font-bold text-white mb-2">No Profiles Found</h2>
-                <p className="text-zinc-400 max-w-sm">
-                    {customLocation
-                        ? `No users found around ${customLocation.name}. Try a different location.`
-                        : "You've seen everyone nearby. Check back later for new matches or change your location."}
-                </p>
-                <div className="flex flex-col gap-3 mt-6">
-                    <button
-                        onClick={() => {
-                            setCurrentIndex(0);
-                            setLoading(true);
-                            fetchUsers();
-                        }}
-                        className="px-6 py-3 rounded-full bg-zinc-800 text-white font-medium hover:bg-zinc-700"
-                    >
-                        Refresh
-                    </button>
-                    <button
-                        onClick={() => setShowLocationSearch(true)}
-                        className="px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium"
-                    >
-                        Change Location
-                    </button>
-                </div>
-                {renderLocationSearch()}
-            </div>
-        );
-    }
 
     return (
         <div className="relative h-[calc(100vh-5rem)] overflow-hidden">
@@ -499,10 +327,10 @@ export default function DiscoverPage() {
                 </button>
 
                 <button
-                    onClick={() => setShowFilters(true)}
+                    onClick={handleOpenFilters}
                     className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/40 backdrop-blur-md border border-white/5 text-white hover:bg-zinc-800 transition-colors"
                 >
-                    <Search className="w-3 h-3 text-pink-500" />
+                    <SlidersHorizontal className="w-3 h-3 text-pink-500" />
                     <span className="text-sm font-bold">Filters</span>
                 </button>
             </div>
@@ -510,123 +338,180 @@ export default function DiscoverPage() {
             {renderLocationSearch()}
             {renderFilters()}
 
-            {/* Cards Stack */}
-            <div className="absolute inset-4 top-16 bottom-24 flex items-center justify-center">
-                <AnimatePresence>
-                    {users.slice(currentIndex, currentIndex + 2).reverse().map((user, index) => {
-                        const isTop = index === (users.slice(currentIndex, currentIndex + 2).length - 1);
-                        const isUserOnline = isOnline(user.lastActive);
+            {loading && users.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                    <Loader2 className="w-10 h-10 text-pink-500 animate-spin" />
+                </div>
+            ) : locationError ? (
+                <div className="flex flex-col items-center justify-center h-full text-center px-8">
+                    <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mb-6">
+                        <MapPin className="w-10 h-10 text-pink-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">Enable Location</h2>
+                    <p className="text-zinc-400 max-w-sm mb-6">
+                        We need your location to find people nearby. Please enable location access or search manually.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={handleEnableLocation}
+                            className="px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium"
+                        >
+                            Enable Location
+                        </button>
+                        <button
+                            onClick={() => setShowLocationSearch(true)}
+                            className="text-pink-400 hover:text-pink-300 text-sm font-medium"
+                        >
+                            Or search manually
+                        </button>
+                    </div>
+                </div>
+            ) : users.length === 0 || !currentUser ? (
+                <div className="flex flex-col items-center justify-center h-full text-center px-8">
+                    <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mb-6">
+                        <Sparkles className="w-10 h-10 text-pink-400" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">No Profiles Found</h2>
+                    <p className="text-zinc-400 max-w-sm">
+                        {customLocation
+                            ? `No users found around ${customLocation.name}. Try expanding your filters or choosing a different location.`
+                            : "You've seen everyone nearby. Check back later for new people or change your filters."}
+                    </p>
+                    <div className="flex flex-col gap-3 mt-6">
+                        <button
+                            onClick={() => {
+                                setCurrentIndex(0);
+                                setLoading(true);
+                                fetchUsers();
+                            }}
+                            className="px-6 py-3 rounded-full bg-zinc-800 text-white font-medium hover:bg-zinc-700"
+                        >
+                            Refresh
+                        </button>
+                        <button
+                            onClick={() => setShowFilters(true)}
+                            className="px-6 py-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium"
+                        >
+                            Change Filters
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    {/* Cards Stack */}
+                    <div className="absolute inset-4 top-16 bottom-24 flex items-center justify-center">
+                        <AnimatePresence>
+                            {users.slice(currentIndex, currentIndex + 2).reverse().map((user, index) => {
+                                const isTop = index === (users.slice(currentIndex, currentIndex + 2).length - 1);
+                                const isUserOnline = isOnline(user.lastActive);
 
-                        return (
-                            <motion.div
-                                key={user._id}
-                                className="absolute w-full max-w-sm h-full"
-                                initial={{ scale: isTop ? 1 : 0.95, y: isTop ? 0 : 10 }}
-                                animate={{
-                                    scale: isTop ? 1 : 0.95,
-                                    y: isTop ? 0 : 10,
-                                    x: isTop && swiping ? (swiping === 'right' ? 300 : -300) : 0,
-                                    rotate: isTop && swiping ? (swiping === 'right' ? 15 : -15) : 0,
-                                    opacity: isTop && swiping ? 0 : 1,
-                                }}
-                                exit={{ x: swiping === 'right' ? 300 : -300, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                drag={isTop ? 'x' : false}
-                                dragConstraints={{ left: 0, right: 0 }}
-                                onDragEnd={isTop ? handleDragEnd : undefined}
-                            >
-                                <div className="relative w-full h-full rounded-3xl overflow-hidden bg-zinc-800 shadow-2xl">
-                                    {/* Photo */}
-                                    {user.photos[0] ? (
-                                        <Image
-                                            src={user.photos[0]}
-                                            alt={user.name}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-                                            <span className="text-6xl font-bold text-white">
-                                                {user.name.charAt(0).toUpperCase()}
-                                            </span>
-                                        </div>
-                                    )}
+                                return (
+                                    <motion.div
+                                        key={user._id}
+                                        className="absolute w-full max-w-sm h-full"
+                                        initial={{ scale: isTop ? 1 : 0.95, y: isTop ? 0 : 10 }}
+                                        animate={{
+                                            scale: isTop ? 1 : 0.95,
+                                            y: isTop ? 0 : 10,
+                                            x: isTop && swiping ? (swiping === 'right' ? 300 : -300) : 0,
+                                            rotate: isTop && swiping ? (swiping === 'right' ? 15 : -15) : 0,
+                                            opacity: isTop && swiping ? 0 : 1,
+                                        }}
+                                        exit={{ x: swiping === 'right' ? 300 : -300, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        drag={isTop ? 'x' : false}
+                                        dragConstraints={{ left: 0, right: 0 }}
+                                        onDragEnd={isTop ? handleDragEnd : undefined}
+                                    >
+                                        <div className="relative w-full h-full rounded-3xl overflow-hidden bg-zinc-800 shadow-2xl">
+                                            {/* Photo */}
+                                            {user.photos[0] ? (
+                                                <Image
+                                                    src={user.photos[0]}
+                                                    alt={user.name}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
+                                                    <span className="text-6xl font-bold text-white">
+                                                        {user.name.charAt(0).toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            )}
 
-                                    {/* Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                                            {/* Gradient Overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-                                    {/* User Info */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h2 className="text-2xl font-bold text-white">
-                                                {user.name}
-                                                {user.dateOfBirth && (
-                                                    <span className="font-normal">, {calculateAge(user.dateOfBirth)}</span>
+                                            {/* User Info */}
+                                            <div className="absolute bottom-0 left-0 right-0 p-6">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h2 className="text-2xl font-bold text-white">
+                                                        {user.name}
+                                                        {user.dateOfBirth && (
+                                                            <span className="font-normal">, {calculateAge(user.dateOfBirth)}</span>
+                                                        )}
+                                                    </h2>
+                                                    {isUserOnline && (
+                                                        <div className="flex items-center gap-1 bg-green-500/20 px-2 py-0.5 rounded-full border border-green-500/50">
+                                                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                                            <span className="text-xs text-green-400 font-medium tracking-wide">ONLINE</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center gap-2 mt-1 text-zinc-300">
+                                                    <MapPin className="w-4 h-4" />
+                                                    <span>{user.distance} km away</span>
+                                                </div>
+                                                {user.bio && (
+                                                    <p className="mt-2 text-zinc-300 line-clamp-2">{user.bio}</p>
                                                 )}
-                                            </h2>
-                                            {isUserOnline && (
-                                                <div className="flex items-center gap-1 bg-green-500/20 px-2 py-0.5 rounded-full border border-green-500/50">
-                                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                                    <span className="text-xs text-green-400 font-medium tracking-wide">ONLINE</span>
-                                                </div>
-                                            )}
-                                            {!isUserOnline && user.lastActive && (
-                                                <div className="flex items-center gap-1 bg-zinc-500/20 px-2 py-0.5 rounded-full border border-zinc-500/50">
-                                                    <span className="text-xs text-zinc-400 font-medium">OFFLINE</span>
-                                                </div>
+                                            </div>
+
+                                            {/* Swipe Indicators */}
+                                            {isTop && (
+                                                <>
+                                                    <motion.div
+                                                        className="absolute top-6 left-6 px-4 py-2 rounded-lg border-4 border-green-500 text-green-500 font-bold text-xl rotate-[-20deg]"
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: swiping === 'right' ? 1 : 0 }}
+                                                    >
+                                                        LIKE
+                                                    </motion.div>
+                                                    <motion.div
+                                                        className="absolute top-6 right-6 px-4 py-2 rounded-lg border-4 border-red-500 text-red-500 font-bold text-xl rotate-[20deg]"
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: swiping === 'left' ? 1 : 0 }}
+                                                    >
+                                                        SKIP
+                                                    </motion.div>
+                                                </>
                                             )}
                                         </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </div>
 
-                                        <div className="flex items-center gap-2 mt-1 text-zinc-300">
-                                            <MapPin className="w-4 h-4" />
-                                            <span>{user.distance} km away</span>
-                                        </div>
-                                        {user.bio && (
-                                            <p className="mt-2 text-zinc-300 line-clamp-2">{user.bio}</p>
-                                        )}
-                                    </div>
-
-                                    {/* Swipe Indicators */}
-                                    {isTop && (
-                                        <>
-                                            <motion.div
-                                                className="absolute top-6 left-6 px-4 py-2 rounded-lg border-4 border-green-500 text-green-500 font-bold text-xl rotate-[-20deg]"
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: swiping === 'right' ? 1 : 0 }}
-                                            >
-                                                LIKE
-                                            </motion.div>
-                                            <motion.div
-                                                className="absolute top-6 right-6 px-4 py-2 rounded-lg border-4 border-red-500 text-red-500 font-bold text-xl rotate-[20deg]"
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: swiping === 'left' ? 1 : 0 }}
-                                            >
-                                                NOPE
-                                            </motion.div>
-                                        </>
-                                    )}
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </AnimatePresence>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-8">
-                <button
-                    onClick={() => handleSwipe('left')}
-                    className="w-16 h-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center hover:scale-110 hover:bg-red-500/20 hover:border-red-500 transition-all"
-                >
-                    <X className="w-8 h-8 text-red-500" />
-                </button>
-                <button
-                    onClick={() => handleSwipe('right')}
-                    className="w-20 h-20 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-pink-500/30"
-                >
-                    <Heart className="w-10 h-10 text-white" fill="white" />
-                </button>
-            </div>
+                    {/* Action Buttons */}
+                    <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-8">
+                        <button
+                            onClick={() => handleSwipe('left')}
+                            className="w-16 h-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center hover:scale-110 hover:bg-red-500/20 hover:border-red-500 transition-all"
+                        >
+                            <X className="w-8 h-8 text-red-500" />
+                        </button>
+                        <button
+                            onClick={() => handleSwipe('right')}
+                            className="w-20 h-20 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-pink-500/30"
+                        >
+                            <Heart className="w-10 h-10 text-white" fill="white" />
+                        </button>
+                    </div>
+                </>
+            )}
 
             {/* Match Modal */}
             <AnimatePresence>
@@ -646,16 +531,16 @@ export default function DiscoverPage() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <Sparkles className="w-16 h-16 text-white mx-auto mb-4" />
-                            <h2 className="text-3xl font-bold text-white mb-2">It&apos;s a Match!</h2>
+                            <h2 className="text-3xl font-bold text-white mb-2">You Connected!</h2>
                             <p className="text-white/80 mb-6">
-                                You and {matchModal.name} liked each other.
+                                You and {matchModal.name} want to connect.
                             </p>
                             <div className="flex gap-4">
                                 <button
                                     onClick={() => setMatchModal(null)}
                                     className="flex-1 py-3 rounded-full bg-white/20 text-white font-medium hover:bg-white/30 transition-colors"
                                 >
-                                    Keep Swiping
+                                    Keep Browsing
                                 </button>
                                 <button
                                     onClick={() => {

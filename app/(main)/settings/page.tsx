@@ -51,7 +51,7 @@ export default function SettingsPage() {
             ],
         },
         {
-            title: 'Privacy & Safety',
+            title: 'Privacy & Community',
             items: [
                 {
                     icon: Eye,
@@ -96,17 +96,17 @@ export default function SettingsPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-zinc-950">
+        <div className="min-h-screen bg-background">
             {/* Header */}
-            <div className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800/50">
+            <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
                 <div className="flex items-center gap-4 p-4">
                     <button
                         onClick={() => router.back()}
                         className="p-2 rounded-full hover:bg-zinc-800 transition-colors"
                     >
-                        <ChevronLeft className="w-6 h-6 text-white" />
+                        <ChevronLeft className="w-6 h-6 text-foreground" />
                     </button>
-                    <h1 className="text-xl font-bold text-white">Settings</h1>
+                    <h1 className="text-xl font-bold text-foreground">Settings</h1>
                 </div>
             </div>
 
@@ -116,7 +116,7 @@ export default function SettingsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
-                    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3 px-1">
+                    <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
                         Notifications
                     </h2>
                     <NotificationToggle />
@@ -130,22 +130,22 @@ export default function SettingsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 * (sIdx + 1) }}
                     >
-                        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3 px-1">
+                        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
                             {section.title}
                         </h2>
-                        <div className="rounded-2xl bg-zinc-900/50 border border-zinc-800 overflow-hidden divide-y divide-zinc-800">
+                        <div className="rounded-2xl bg-card border border-border overflow-hidden divide-y divide-border">
                             {section.items.map((item) => (
                                 <button
                                     key={item.label}
                                     className="w-full flex items-center gap-4 p-4 hover:bg-zinc-800/50 transition-colors text-left"
                                 >
-                                    <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
-                                        <item.icon className="w-5 h-5 text-zinc-400" />
+                                    <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                                        <item.icon className="w-5 h-5 text-muted-foreground" />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium">{item.label}</p>
+                                        <p className="text-foreground font-medium">{item.label}</p>
                                         {item.description && (
-                                            <p className="text-xs text-zinc-500">{item.description}</p>
+                                            <p className="text-xs text-muted-foreground">{item.description}</p>
                                         )}
                                     </div>
                                     {item.toggle !== undefined && (
@@ -177,12 +177,12 @@ export default function SettingsPage() {
                     <div className="space-y-2">
                         <button
                             onClick={() => signOut({ callbackUrl: '/login' })}
-                            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:bg-zinc-800/50 transition-colors"
+                            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card border border-border hover:bg-secondary/50 transition-colors"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
-                                <LogOut className="w-5 h-5 text-zinc-400" />
+                            <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                                <LogOut className="w-5 h-5 text-muted-foreground" />
                             </div>
-                            <span className="text-white font-medium">Log Out</span>
+                            <span className="text-foreground font-medium">Log Out</span>
                         </button>
 
                         <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-colors">

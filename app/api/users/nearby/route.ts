@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/models/User';
 import Match from '@/lib/models/Match';
+import mongoose from 'mongoose';
 
 export async function GET(request: Request) {
     try {
@@ -44,49 +45,31 @@ export async function GET(request: Request) {
             ...(currentUser.likedUsers || []),
             ...(currentUser.dislikedUsers || []),
             ...recentSkippedIds
-        ];
+        ].map(id => id.toString());
 
         // Base query
         const query: any = {
-            _id: { $nin: excludedIds },
+            _id: { $nin: excludedIds.map(id => new mongoose.Types.ObjectId(id)) }, // Interaction with aggregation needs valid ObjectIds
             isBanned: { $ne: true },
             role: { $ne: 'admin' },
             onboardingComplete: true
         };
 
-        // 1. Geospatial Filter
-        const searchLat = lat ?? currentUser.location?.coordinates[1];
-        const searchLng = lng ?? currentUser.location?.coordinates[0];
-
-        if (searchLat !== undefined && searchLng !== undefined) {
-            query.location = {
-                $near: {
-                    $geometry: {
-                        type: 'Point',
-                        coordinates: [searchLng, searchLat]
-                    },
-                    $maxDistance: maxDistance * 1000 // Convert km to meters
-                }
-            };
-        }
-
         // 2. Gender Filter
         if (gender && gender !== 'both') {
             query.gender = gender;
         } else if (!gender && currentUser.preferences?.gender && currentUser.preferences.gender !== 'both') {
-            // Use user preferences if no explicit filter
             query.gender = currentUser.preferences.gender;
         }
 
         // 3. Age Filter
         const today = new Date();
-        const minBirthYear = today.getFullYear() - ageMax - 1;
-        const maxBirthYear = today.getFullYear() - ageMin;
+        const minBirthDate = new Date(today.getFullYear() - ageMax - 1, today.getMonth(), today.getDate() + 1);
+        const maxBirthDate = new Date(today.getFullYear() - ageMin, today.getMonth(), today.getDate());
 
-        // This is a rough age calculation by year
         query.dateOfBirth = {
-            $gte: new Date(minBirthYear, today.getMonth(), today.getDate()),
-            $lte: new Date(maxBirthYear, today.getMonth(), today.getDate())
+            $gte: minBirthDate,
+            $lte: maxBirthDate
         };
 
         // 4. Online Only Filter
@@ -95,17 +78,67 @@ export async function GET(request: Request) {
             query.lastActive = { $gte: fiveMinutesAgo };
         }
 
-        const nearbyUsers = await User.find(query)
-            .select('name photos dateOfBirth lastActive location address gender interests bio jobTitle company boostedUntil')
-            .skip(skip)
-            .limit(limit)
-            .lean();
+        // Geospatial Logic using Aggregation
+        const searchLat = lat ?? currentUser.location?.coordinates[1];
+        const searchLng = lng ?? currentUser.location?.coordinates[0];
 
-        // Calculate distances and details
-        const usersWithDetails = nearbyUsers.map((user: any) => {
-            const age = user.dateOfBirth
-                ? today.getFullYear() - new Date(user.dateOfBirth).getFullYear()
-                : null;
+        let usersWithDetails;
+
+        if (searchLat !== undefined && searchLng !== undefined) {
+            // Use $geoNear for accurate distance and sorting
+            usersWithDetails = await User.aggregate([
+                {
+                    $geoNear: {
+                        near: { type: 'Point', coordinates: [searchLng, searchLat] },
+                        distanceField: 'distance',
+                        maxDistance: maxDistance * 1000,
+                        query: query,
+                        spherical: true
+                    }
+                },
+                { $sort: { boostedUntil: -1, distance: 1 } }, // Boosted users first, then by distance
+                { $skip: skip },
+                { $limit: limit },
+                {
+                    $project: {
+                        name: 1,
+                        photos: 1,
+                        dateOfBirth: 1,
+                        lastActive: 1,
+                        location: 1,
+                        address: 1,
+                        gender: 1,
+                        interests: 1,
+                        bio: 1,
+                        jobTitle: 1,
+                        company: 1,
+                        boostedUntil: 1,
+                        distance: { $round: [{ $divide: ['$distance', 1000] }, 1] } // Round to 1 decimal place (km)
+                    }
+                }
+            ]);
+        } else {
+            // Fallback for no location
+            const nearbyUsers = await User.find(query)
+                .select('name photos dateOfBirth lastActive location address gender interests bio jobTitle company boostedUntil')
+                .skip(skip)
+                .limit(limit)
+                .lean();
+
+            usersWithDetails = nearbyUsers.map((user: any) => ({
+                ...user,
+                distance: 0
+            }));
+        }
+
+        // Add computed fields
+        const formattedUsers = usersWithDetails.map((user: any) => {
+            const birthDate = new Date(user.dateOfBirth);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
 
             const isOnline = user.lastActive
                 ? new Date(user.lastActive) > new Date(Date.now() - 5 * 60 * 1000)
@@ -114,12 +147,11 @@ export async function GET(request: Request) {
             return {
                 ...user,
                 age,
-                isOnline,
-                distance: 1 // Placeholder for now, could calculate properly if needed
+                isOnline
             };
         });
 
-        return NextResponse.json({ users: usersWithDetails });
+        return NextResponse.json({ users: formattedUsers });
 
     } catch (error) {
         console.error('Get nearby users error:', error);

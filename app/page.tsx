@@ -10,7 +10,7 @@ export default function LandingPage() {
   const { data: session, status } = useSession();
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Dynamic Background Elements */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-pink-600/20 rounded-full blur-[120px] animate-pulse" />
@@ -19,7 +19,7 @@ export default function LandingPage() {
       </div>
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-2xl bg-black/20">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-2xl bg-background/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <Link href="/" className="flex items-center gap-1.5 sm:gap-3 group shrink-0">
@@ -74,7 +74,7 @@ export default function LandingPage() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-md"
             >
               <Sparkles className="w-4 h-4 text-pink-400" />
-              <span className="text-xs font-bold tracking-widest uppercase text-zinc-400">Next Gen Matching</span>
+              <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground">Next Gen Social</span>
             </motion.div>
 
             <motion.h1
@@ -85,7 +85,7 @@ export default function LandingPage() {
             >
               Find Your <br className="hidden sm:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 animate-gradient-x">
-                Perfect Match
+                Local Community
               </span>
             </motion.h1>
 
@@ -93,9 +93,9 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.15 }}
-              className="max-w-xl mx-auto text-lg sm:text-xl text-zinc-400 leading-relaxed mb-12 sm:px-4"
+              className="max-w-xl mx-auto text-lg sm:text-xl text-muted-foreground leading-relaxed mb-12 sm:px-4"
             >
-              Beyond swiping. Connect with souls that resonate. NearMatch uses spatial intelligence to find meaningful sparks right where you are.
+              Explore your local community. NearMatch helps you find friends and groups near you with similar interests.
             </motion.p>
 
             <motion.div
@@ -146,10 +146,10 @@ export default function LandingPage() {
       </section>
 
       {/* Features - Bento Grid Style for Modern Look */}
-      <section id="features" className="relative z-10 py-32 bg-[#080808]">
+      <section id="features" className="relative z-10 py-32 bg-secondary/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">Elevated Dating Experience</h2>
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">Elevated Social Experience</h2>
             <p className="text-zinc-500 text-lg max-w-2xl mx-auto italic">Crafted for modern connections, powered by empathy.</p>
           </div>
 
@@ -175,7 +175,7 @@ export default function LandingPage() {
               },
               {
                 icon: Sparkles,
-                title: 'Pulse Matches',
+                title: 'Pulse Connections',
                 description: 'AI-driven suggestions that evolve with your personality.',
                 className: 'lg:col-span-2 bg-gradient-to-r from-purple-500/10 to-indigo-500/10',
               },
@@ -230,7 +230,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer - Minimal & Premium */}
-      <footer className="relative z-10 border-t border-white/5 py-20 bg-black">
+      <footer className="relative z-10 border-t border-border/10 py-20 bg-background/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 px-4 sm:px-0">
             <div className="lg:col-span-2">
@@ -241,7 +241,7 @@ export default function LandingPage() {
                 <span className="text-xl font-black tracking-tighter">NearMatch</span>
               </Link>
               <p className="text-zinc-500 text-sm max-w-sm leading-relaxed mb-8">
-                The modern dating standard for humans seeking authentic, proximity-based connections. Zero noise. Pure spark.
+                The modern social standard for humans seeking authentic, proximity-based connections. Zero noise. Pure spark.
               </p>
             </div>
 
@@ -249,7 +249,7 @@ export default function LandingPage() {
               <h4 className="font-bold mb-6 tracking-widest uppercase text-xs text-white/50">Experience</h4>
               <nav className="flex flex-col gap-4">
                 <Link href="/about" className="text-sm text-zinc-500 hover:text-white transition-colors">Vision</Link>
-                <Link href="/safety" className="text-sm text-zinc-500 hover:text-white transition-colors">Safety Center</Link>
+                <Link href="/guidelines" className="text-sm text-zinc-500 hover:text-white transition-colors">Community Guidelines</Link>
                 <Link href="/premium" className="text-sm text-zinc-500 hover:text-white transition-colors">Go Premium</Link>
               </nav>
             </div>
@@ -265,7 +265,7 @@ export default function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 px-4 sm:px-0">
-            <p className="text-xs font-medium text-zinc-600 tracking-widest">© 2026 NEAR MATCH CO. ESTABLISHED WORLDWIDE.</p>
+            <p className="text-xs font-medium text-muted-foreground tracking-widest">© 2026 NEAR MATCH CO. ESTABLISHED WORLDWIDE.</p>
             <div className="flex gap-6">
               <Link href="/contact" className="text-xs font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest">Support</Link>
               <span className="text-zinc-800">//</span>

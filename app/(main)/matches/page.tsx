@@ -110,11 +110,11 @@ export default function LikesPage() {
                 <div className="relative px-6 pt-8 pb-4">
                     <div className="flex items-center justify-between mb-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">Likes</h1>
+                            <h1 className="text-3xl font-bold text-white">Connection Requests</h1>
                             <p className="text-zinc-400 text-sm mt-1">
                                 {likedBy.length > 0
-                                    ? `${likedBy.length} people like you`
-                                    : 'See who likes you'}
+                                    ? `${likedBy.length} people want to connect`
+                                    : 'See who wants to connect'}
                             </p>
                         </div>
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg shadow-pink-500/20">
@@ -134,15 +134,15 @@ export default function LikesPage() {
                         <div className="w-24 h-24 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-6">
                             <Heart className="w-10 h-10 text-pink-500/50" />
                         </div>
-                        <h2 className="text-xl font-bold text-white mb-2">No likes yet</h2>
+                        <h2 className="text-xl font-bold text-white mb-2">No requests yet</h2>
                         <p className="text-zinc-400 max-w-xs mb-8">
-                            Don't worry, they're just playing hard to get. Boost your profile to get more visibility!
+                            Don't worry, building your network takes time. Boost your profile to get more visibility!
                         </p>
                         <Link
                             href="/discover"
                             className="px-8 py-4 rounded-full bg-white text-black font-bold hover:bg-zinc-200 transition-colors"
                         >
-                            Start Matching
+                            Discover People
                         </Link>
                     </motion.div>
                 ) : (

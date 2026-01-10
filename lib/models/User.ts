@@ -47,6 +47,8 @@ export interface IUser extends Document {
     company?: string;
     educationLevel?: string;
     university?: string;
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -191,6 +193,11 @@ const UserSchema = new Schema<IUser>(
         timestamps: true,
     }
 );
+
+UserSchema.add({
+    resetPasswordToken: { type: String, select: false },
+    resetPasswordExpires: { type: Date, select: false }
+});
 
 // Geospatial index for location-based queries
 UserSchema.index({ location: '2dsphere' });
