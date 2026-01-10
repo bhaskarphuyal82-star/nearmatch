@@ -9,6 +9,8 @@ import { GoogleTagManager } from "@/components/GoogleTagManager";
 import { Providers } from "@/components/providers";
 import { connectDB } from "@/lib/db";
 import { getSiteConfig } from "@/lib/models/SiteConfig";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./api/auth/[...nextauth]/route";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -104,6 +106,7 @@ export default async function RootLayout({
 }>) {
   await connectDB();
   const config = await getSiteConfig();
+  const session = await getServerSession(authOptions);
 
   return (
     <html lang="en">
@@ -118,10 +121,10 @@ export default async function RootLayout({
         suppressHydrationWarning={true}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GoogleAdSense pId={config.ads.googleAdSenseId || ''} />
-        <GoogleAnalytics id={config.seo.googleAnalyticsId || ''} />
-        <GoogleTagManager id={config.seo.googleTagManagerId || ''} />
-        <Providers>
+        <Providers session={session}>
+          <GoogleAdSense pId={config.ads.googleAdSenseId || ''} />
+          <GoogleAnalytics id={config.seo.googleAnalyticsId || ''} />
+          <GoogleTagManager id={config.seo.googleTagManagerId || ''} />
           {children}
           <PWAInstallPrompt />
           <InterstitialAd />

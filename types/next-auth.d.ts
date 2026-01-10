@@ -7,12 +7,18 @@ declare module 'next-auth' {
             id: string;
             role: string;
             isBanned?: boolean;
+            onboardingComplete: boolean;
+            createdAt: string;
+            dateOfBirth: string | null;
         } & DefaultSession['user'];
     }
 
     interface User {
         role: string;
         isBanned?: boolean;
+        onboardingComplete: boolean;
+        createdAt: Date;
+        dateOfBirth?: Date;
     }
 }
 
@@ -21,5 +27,8 @@ declare module 'next-auth/jwt' {
         id: string;
         role: string;
         isBanned?: boolean;
+        onboardingComplete: boolean;
+        createdAt: string;
+        dateOfBirth: string | null;
     }
 }

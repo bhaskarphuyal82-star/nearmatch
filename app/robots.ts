@@ -5,7 +5,7 @@ import { getSiteConfig } from '@/lib/models/SiteConfig';
 export default async function robots(): Promise<MetadataRoute.Robots> {
     await connectDB();
     const config = await getSiteConfig();
-    const baseUrl = config.siteUrl || 'https://nearmatch.site';
+    const baseUrl = config.siteUrl || 'https://nearmatch.me';
 
     const commonDisallows = [
         '/connections/',

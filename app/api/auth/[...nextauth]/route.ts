@@ -51,6 +51,9 @@ export const authOptions: NextAuthOptions = {
                     name: user.name,
                     role: user.role,
                     image: user.photos[0] || null,
+                    onboardingComplete: user.onboardingComplete,
+                    createdAt: user.createdAt,
+                    dateOfBirth: user.dateOfBirth,
                 };
             },
         }),
@@ -107,21 +110,37 @@ export const authOptions: NextAuthOptions = {
                 return false;
             }
         },
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }) {
             if (user) {
                 await connectDB();
                 const dbUser = await User.findOne({ email: user.email });
                 if (dbUser) {
                     token.id = dbUser._id.toString();
                     token.role = dbUser.role;
+                    token.onboardingComplete = dbUser.onboardingComplete;
+                    token.createdAt = dbUser.createdAt.toISOString();
+                    token.dateOfBirth = dbUser.dateOfBirth?.toISOString() || null;
                 }
             }
+
+            // Handle manual updates
+            if (trigger === "update" && session) {
+                if (session.onboardingComplete !== undefined) {
+                    token.onboardingComplete = session.onboardingComplete;
+                }
+                if (session.name) token.name = session.name;
+                if (session.image) token.picture = session.image;
+            }
+
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
+                session.user.onboardingComplete = token.onboardingComplete as boolean;
+                session.user.createdAt = token.createdAt as string;
+                session.user.dateOfBirth = token.dateOfBirth as string | null;
 
                 // Check if user is banned (fresh check)
                 await connectDB();
@@ -132,13 +151,7 @@ export const authOptions: NextAuthOptions = {
                     // Update session with latest DB info
                     session.user.isBanned = user.isBanned;
                 } else {
-                    // User deleted from DB but token remains -> invalid session
-                    // Returning null or modifying token would be ideal, but here we can just flag it
-                    // or NextAuth might handle it if we return null? 
-                    // Actually, returning a session with empty user or throwing might be safer to force re-login
                     console.log(`[Session Callback] User ${token.id} not found in DB. Invalidating session.`);
-                    // @ts-ignore
-                    // return null; 
                     throw new Error("SessionInvalid");
                 }
             }

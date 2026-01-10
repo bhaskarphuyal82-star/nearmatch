@@ -10,239 +10,267 @@ export default function LandingPage() {
   const { data: session, status } = useSession();
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white overflow-hidden">
-      {/* Animated Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+    <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-pink-600/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] bg-purple-600/20 rounded-full blur-[120px] animate-pulse delay-700" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(236,72,153,0.05)_0%,transparent_70%)]" />
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-zinc-800/50 backdrop-blur-xl">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 backdrop-blur-2xl bg-black/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" fill="white" />
+          <div className="flex items-center justify-between h-20">
+            <Link href="/" className="flex items-center gap-1.5 sm:gap-3 group shrink-0">
+              <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-pink-500/20 group-hover:scale-105 transition-transform duration-300">
+                <Heart className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="currentColor" />
               </div>
-              <span className="text-xl font-bold">NearMatch</span>
+              <span className="text-lg sm:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400 block">
+                NearMatch
+              </span>
             </Link>
-            <div className="flex items-center gap-4">
+
+            <nav className="flex items-center gap-1.5 sm:gap-6">
               {status === 'loading' ? (
-                <div className="w-20 h-8 bg-zinc-800 rounded-full animate-pulse" />
+                <div className="w-20 sm:w-24 h-9 sm:h-10 bg-white/5 rounded-full animate-pulse" />
               ) : session?.user ? (
-                <>
-                  <span className="hidden sm:inline-block text-zinc-300">
-                    Welcome back, <span className="text-white font-medium">{session.user.name?.split(' ')[0] || 'User'}</span>
-                  </span>
-                  <Link
-                    href={session.user.role === 'admin' ? '/admin' : '/discover'}
-                    className="px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 font-medium hover:opacity-90 transition-opacity"
-                  >
-                    Go to App
-                  </Link>
-                </>
+                <Link
+                  href={session.user.role === 'admin' ? '/admin' : '/discover'}
+                  className="relative group px-4 sm:px-6 py-2 sm:py-2.5 rounded-full overflow-hidden transition-all duration-300"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-600 group-hover:opacity-90 transition-opacity" />
+                  <span className="relative text-xs sm:text-sm font-bold tracking-wide">Enter App</span>
+                </Link>
               ) : (
                 <>
                   <Link
                     href="/login"
-                    className="px-4 py-2 text-zinc-300 hover:text-white transition-colors"
+                    className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/register"
-                    className="px-5 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 font-medium hover:opacity-90 transition-opacity"
+                    className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-white text-black text-xs sm:text-sm font-bold hover:bg-zinc-200 transition-all duration-300 shadow-xl shadow-white/10"
                   >
                     Get Started
                   </Link>
                 </>
               )}
-            </div>
+            </nav>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-20 pb-32">
+      <section className="relative z-10 pt-40 pb-20 sm:pt-52 sm:pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight"
+          <div className="text-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-md"
             >
-              Find Your{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500">
+              <Sparkles className="w-4 h-4 text-pink-400" />
+              <span className="text-xs font-bold tracking-widest uppercase text-zinc-400">Next Gen Matching</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[0.9] sm:leading-[0.85] mb-8"
+            >
+              Find Your <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 animate-gradient-x">
                 Perfect Match
-              </span>{' '}
-              Nearby
+              </span>
             </motion.h1>
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-6 text-xl text-zinc-400 max-w-2xl mx-auto"
+              transition={{ duration: 0.7, delay: 0.15 }}
+              className="max-w-xl mx-auto text-lg sm:text-xl text-zinc-400 leading-relaxed mb-12 sm:px-4"
             >
-              Connect with people around you. Discover meaningful relationships with our intelligent matching system.
+              Beyond swiping. Connect with souls that resonate. NearMatch uses spatial intelligence to find meaningful sparks right where you are.
             </motion.p>
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-5 sm:gap-4"
             >
               <Link
                 href="/register"
-                className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 font-semibold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-10 py-5 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-2xl shadow-pink-500/25 flex items-center justify-center gap-3 group"
               >
-                <Sparkles className="w-5 h-5" />
-                Start Matching
+                Start Your Journey
+                <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
               </Link>
               <Link
                 href="#features"
-                className="w-full sm:w-auto px-8 py-4 rounded-full border border-zinc-700 font-semibold text-lg hover:bg-zinc-800/50 transition-colors"
+                className="w-full sm:w-auto px-10 py-5 rounded-2xl bg-white/5 border border-white/10 font-bold text-lg hover:bg-white/10 transition-all duration-300 backdrop-blur-xl flex items-center justify-center"
               >
-                Learn More
+                Discovery More
               </Link>
             </motion.div>
-          </div>
 
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto"
-          >
-            {[
-              { value: '10M+', label: 'Active Users' },
-              { value: '5M+', label: 'Matches Made' },
-              { value: '150+', label: 'Countries' },
-              { value: '4.8★', label: 'App Rating' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-zinc-500">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
+            {/* Stats - Floating Style */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="mt-24 sm:mt-32 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto"
+            >
+              {[
+                { value: '10M+', label: 'Active Users', icon: Users },
+                { value: '5M+', label: 'Daily Sparks', icon: Heart },
+                { value: '150+', label: 'Global Cities', icon: MapPin },
+                { value: '4.9★', label: 'User Rating', icon: Sparkles },
+              ].map((stat, idx) => (
+                <div key={idx} className="relative group p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all duration-500">
+                  <div className="text-3xl sm:text-4xl font-black text-white mb-1">{stat.value}</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-zinc-500 group-hover:text-pink-500/80 transition-colors">{stat.label}</div>
+                  <div className="absolute top-4 right-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <stat.icon size={24} />
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="relative z-10 py-24 bg-zinc-900/50">
+      {/* Features - Bento Grid Style for Modern Look */}
+      <section id="features" className="relative z-10 py-32 bg-[#080808]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold">Why Choose NearMatch?</h2>
-            <p className="mt-4 text-lg text-zinc-400">Discover what makes us different</p>
+          <div className="text-center mb-20">
+            <h2 className="text-4xl sm:text-5xl font-black tracking-tight mb-4">Elevated Dating Experience</h2>
+            <p className="text-zinc-500 text-lg max-w-2xl mx-auto italic">Crafted for modern connections, powered by empathy.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[240px]">
             {[
               {
                 icon: MapPin,
-                title: 'Location-Based Matching',
-                description: 'Find people near you with our intelligent geolocation system. Meet someone just around the corner.',
-                gradient: 'from-pink-500 to-rose-600',
-              },
-              {
-                icon: Heart,
-                title: 'Smart Matching',
-                description: 'Our algorithm learns your preferences and shows you the most compatible matches.',
-                gradient: 'from-purple-500 to-violet-600',
-              },
-              {
-                icon: MessageCircle,
-                title: 'Real-time Chat',
-                description: 'Connect instantly with your matches through our seamless messaging system.',
-                gradient: 'from-blue-500 to-cyan-600',
+                title: 'Proximity Flow',
+                description: 'Real-time proximity matching that respects your context.',
+                className: 'lg:col-span-2 lg:row-span-1 bg-gradient-to-br from-pink-500/10 to-transparent',
               },
               {
                 icon: Shield,
-                title: 'Verified Profiles',
-                description: 'Feel safe with our verified profiles and active moderation team.',
-                gradient: 'from-green-500 to-emerald-600',
+                title: 'Private by Design',
+                description: 'End-to-end encrypted signals and rigorous verification.',
+                className: 'bg-zinc-900/40',
               },
               {
-                icon: Users,
-                title: 'Community Events',
-                description: 'Join local events and meet people who share your interests.',
-                gradient: 'from-orange-500 to-amber-600',
+                icon: MessageCircle,
+                title: 'Dynamic Conversations',
+                description: 'Expression-first chat with rich media and interactive sparks.',
+                className: 'bg-zinc-900/40',
               },
               {
                 icon: Sparkles,
-                title: 'Premium Features',
-                description: 'Unlock unlimited likes, see who likes you, and boost your profile.',
-                gradient: 'from-pink-500 to-purple-600',
+                title: 'Pulse Matches',
+                description: 'AI-driven suggestions that evolve with your personality.',
+                className: 'lg:col-span-2 bg-gradient-to-r from-purple-500/10 to-indigo-500/10',
               },
-            ].map((feature) => (
+            ].map((feature, idx) => (
               <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="p-6 rounded-2xl bg-zinc-800/50 border border-zinc-700/50 hover:border-zinc-600 transition-colors group"
+                key={idx}
+                whileHover={{ y: -5 }}
+                className={`group relative p-8 rounded-[2.5rem] border border-white/5 overflow-hidden transition-all duration-300 ${feature.className}`}
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className="w-6 h-6 text-white" />
+                <div className="relative z-10">
+                  <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6 border border-white/10 group-hover:scale-110 transition-transform duration-500">
+                    <feature.icon className="w-7 h-7 text-pink-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
+                  <p className="text-zinc-500 text-sm leading-relaxed">{feature.description}</p>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-zinc-400">{feature.description}</p>
+                {/* Visual Accent */}
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-pink-500/10 transition-colors" />
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Dynamic Content Section */}
+      {/* Dynamic Content */}
       <DynamicHomeContent />
 
-      {/* CTA Section */}
-      <section className="relative z-10 py-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Ready to Find Your Match?
-          </h2>
-          <p className="text-xl text-zinc-400 mb-10">
-            Join millions of users who have found meaningful connections on NearMatch.
-          </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 font-semibold text-lg hover:opacity-90 transition-opacity"
+      {/* CTA Section - Full Visual Impact */}
+      <section className="relative z-10 py-32 sm:py-48 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-pink-900/10 to-transparent" />
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            className="p-12 sm:p-20 rounded-[3rem] bg-white/[0.02] border border-white/10 backdrop-blur-3xl shadow-2xl relative"
           >
-            <Heart className="w-5 h-5" fill="white" />
-            Create Your Profile
-          </Link>
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl bg-pink-500 flex items-center justify-center shadow-2xl shadow-pink-500/50 rotate-12">
+              <Heart className="w-10 h-10 text-white" fill="white" />
+            </div>
+            <h2 className="text-4xl sm:text-6xl font-black tracking-tight mb-8">Ready for something real?</h2>
+            <p className="text-xl text-zinc-400 mb-12 max-w-lg mx-auto leading-relaxed">
+              Stop settling. Start discovering. Join the NearMatch community today.
+            </p>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-3 px-12 py-6 rounded-2.5xl bg-white text-black font-black text-xl hover:bg-zinc-200 transition-all duration-300 hover:tracking-wide active:scale-95 shadow-2xl shadow-white/10"
+            >
+              Get Started Now
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-zinc-800 py-12">
+      {/* Footer - Minimal & Premium */}
+      <footer className="relative z-10 border-t border-white/5 py-20 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white" fill="white" />
-              </div>
-              <span className="font-bold">NearMatch</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 px-4 sm:px-0">
+            <div className="lg:col-span-2">
+              <Link href="/" className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+                  <Heart className="w-4 h-4 text-white" fill="currentColor" />
+                </div>
+                <span className="text-xl font-black tracking-tighter">NearMatch</span>
+              </Link>
+              <p className="text-zinc-500 text-sm max-w-sm leading-relaxed mb-8">
+                The modern dating standard for humans seeking authentic, proximity-based connections. Zero noise. Pure spark.
+              </p>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-zinc-400">
-              <Link href="/about" className="hover:text-white transition-colors">About</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-              <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
-              <Link href="/guidelines" className="hover:text-white transition-colors">Guidelines</Link>
-              <Link href="/collection-notice" className="hover:text-white transition-colors">Notice At Collection</Link>
-              <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+
+            <div>
+              <h4 className="font-bold mb-6 tracking-widest uppercase text-xs text-white/50">Experience</h4>
+              <nav className="flex flex-col gap-4">
+                <Link href="/about" className="text-sm text-zinc-500 hover:text-white transition-colors">Vision</Link>
+                <Link href="/safety" className="text-sm text-zinc-500 hover:text-white transition-colors">Safety Center</Link>
+                <Link href="/premium" className="text-sm text-zinc-500 hover:text-white transition-colors">Go Premium</Link>
+              </nav>
             </div>
-            <p className="text-sm text-zinc-500">
-              © 2026 NearMatch. All rights reserved.
-            </p>
+
+            <div>
+              <h4 className="font-bold mb-6 tracking-widest uppercase text-xs text-white/50">Legal</h4>
+              <nav className="flex flex-col gap-4">
+                <Link href="/privacy" className="text-sm text-zinc-500 hover:text-white transition-colors">Privacy</Link>
+                <Link href="/terms" className="text-sm text-zinc-500 hover:text-white transition-colors">Terms</Link>
+                <Link href="/cookies" className="text-sm text-zinc-500 hover:text-white transition-colors">Cookies</Link>
+              </nav>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6 px-4 sm:px-0">
+            <p className="text-xs font-medium text-zinc-600 tracking-widest">© 2026 NEAR MATCH CO. ESTABLISHED WORLDWIDE.</p>
+            <div className="flex gap-6">
+              <Link href="/contact" className="text-xs font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest">Support</Link>
+              <span className="text-zinc-800">//</span>
+              <Link href="/status" className="text-xs font-bold text-zinc-500 hover:text-white transition-colors uppercase tracking-widest">All Systems Go</Link>
+            </div>
           </div>
         </div>
       </footer>

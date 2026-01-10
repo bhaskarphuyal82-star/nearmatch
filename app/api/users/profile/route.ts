@@ -39,6 +39,21 @@ export async function PUT(request: Request) {
 
         const updates = await request.json();
 
+        // 1. Age Validation Check (18+)
+        if (updates.dateOfBirth) {
+            const dob = new Date(updates.dateOfBirth);
+            const age = Math.floor((new Date().getTime() - dob.getTime()) / (31557600000));
+            if (age < 18) {
+                // Auto-ban user
+                await connectDB();
+                await User.findByIdAndUpdate(session.user.id, { isBanned: true });
+                return NextResponse.json({
+                    error: 'You must be at least 18 years old to use this service. Your account has been suspended.',
+                    isBanned: true
+                }, { status: 403 });
+            }
+        }
+
         // Fields that can be updated
         const allowedFields = [
             'name',

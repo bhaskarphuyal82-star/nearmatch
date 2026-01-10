@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface AdRendererProps {
     html: string;
@@ -9,9 +10,18 @@ interface AdRendererProps {
 
 export function AdRenderer({ html, className = '' }: AdRendererProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const { data: session } = useSession();
 
     useEffect(() => {
         if (!containerRef.current || !html) return;
+
+        // 15-minute ad-free period check
+        if (session?.user?.createdAt) {
+            const createdAt = new Date(session.user.createdAt).getTime();
+            const now = new Date().getTime();
+            const fifteenMinutes = 15 * 60 * 1000;
+            if (now - createdAt < fifteenMinutes) return;
+        }
 
         // Clear previous content
         containerRef.current.innerHTML = '';

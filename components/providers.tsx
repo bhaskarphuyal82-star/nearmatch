@@ -2,6 +2,7 @@
 
 import { SessionProvider, useSession } from 'next-auth/react';
 import { BanCheck } from './auth/BanCheck';
+import { useEffect } from 'react';
 
 function GlobalBanCheck() {
     // @ts-ignore
@@ -15,10 +16,21 @@ function GlobalBanCheck() {
 }
 
 import { ToastProvider } from '@/components/ui/Toast';
+import { Session } from 'next-auth';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, session }: { children: React.ReactNode; session: Session | null }) {
+    useEffect(() => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then((registration) => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            }).catch((error) => {
+                console.error('Service Worker registration failed:', error);
+            });
+        }
+    }, []);
+
     return (
-        <SessionProvider>
+        <SessionProvider session={session}>
             <ToastProvider>
                 <GlobalBanCheck />
                 {children}

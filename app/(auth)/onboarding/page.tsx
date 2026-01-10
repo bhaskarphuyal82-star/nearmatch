@@ -713,7 +713,7 @@ const PhotosSection = ({ data, setData, uploading, setUploading }: { data: Onboa
 
 export default function OnboardingPage() {
     const router = useRouter();
-    const { data: session, status } = useSession();
+    const { data: session, status, update } = useSession();
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -846,9 +846,18 @@ export default function OnboardingPage() {
             });
 
             if (res.ok) {
+                // Update session state before redirect
+                await update({ onboardingComplete: true });
                 window.location.href = '/discover';
             } else {
-                console.error('Failed to save profile');
+                const errorData = await res.json();
+                if (res.status === 403 && errorData.isBanned) {
+                    alert(errorData.error || 'Your account has been suspended due to age restrictions.');
+                    window.location.href = '/login'; // Redirect to login (middleware will block them)
+                } else {
+                    console.error('Failed to save profile', errorData);
+                    alert(errorData.error || 'Failed to save profile. Please try again.');
+                }
             }
         } catch (error) {
             console.error('Error:', error);
@@ -863,7 +872,16 @@ export default function OnboardingPage() {
         switch (stepId) {
             case 'basic':
                 // Check basic fields + strict phone number check (must have length > 5 roughly)
-                return !!(data.name && data.dateOfBirth && data.gender && data.phoneNumber && data.phoneNumber.length > 5);
+                if (!(data.name && data.dateOfBirth && data.gender && data.phoneNumber && data.phoneNumber.length > 5)) {
+                    return false;
+                }
+
+                // Age check (18+)
+                const dob = new Date(data.dateOfBirth);
+                const age = Math.floor((new Date().getTime() - dob.getTime()) / (31557600000));
+                if (age < 18) return false;
+
+                return true;
             case 'interests':
                 return data.interests.length > 0;
             case 'physical':
